@@ -6,6 +6,7 @@ import requests
 from rich.console import Console
 from rich.table import Table
 
+from weather_cli import __version__
 from weather_cli.api import get_weather, search_locations
 from weather_cli.cache import clear_cache
 from weather_cli.config import (
@@ -14,36 +15,41 @@ from weather_cli.config import (
     set_forecast_days,
     set_metric,
 )
-from weather_cli.display import (
-    display_current_weather,
-    display_forecast,
-)
+from weather_cli.display import display_current_weather, display_forecast
 from weather_cli.logging_config import configure_logging
+
 
 console = Console()
 logger = logging.getLogger(__name__)
 
 
 def build_weather_parser():
-    """
-    Build the parser used for normal weather lookups.
-    """
+    """Build the parser used for normal weather requests."""
 
     parser = argparse.ArgumentParser(
         prog="weather",
-        description=("Get current weather and forecasts from the terminal."),
+        description=(
+            "A command-line weather application "
+            "powered by Open-Meteo."
+        ),
+    )
+
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
     )
 
     parser.add_argument(
         "city",
         nargs="*",
-        help="City or location to look up",
+        help="City to retrieve weather for",
     )
 
     parser.add_argument(
         "--forecast",
         action="store_true",
-        help="Show the daily forecast",
+        help="Display the daily forecast",
     )
 
     parser.add_argument(
@@ -53,15 +59,15 @@ def build_weather_parser():
         help="Number of forecast days (1-7)",
     )
 
-    unit_group = parser.add_mutually_exclusive_group()
+    units = parser.add_mutually_exclusive_group()
 
-    unit_group.add_argument(
+    units.add_argument(
         "--metric",
         action="store_true",
         help="Use metric units",
     )
 
-    unit_group.add_argument(
+    units.add_argument(
         "--imperial",
         action="store_true",
         help="Use imperial units",
@@ -71,14 +77,17 @@ def build_weather_parser():
 
 
 def build_config_parser():
-    """
-    Build the parser used for Weather CLI
-    configuration commands.
-    """
+    """Build the parser used for configuration commands."""
 
     parser = argparse.ArgumentParser(
         prog="weather config",
         description="Manage Weather CLI configuration.",
+    )
+
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"weather {__version__}",
     )
 
     subparsers = parser.add_subparsers(
@@ -93,18 +102,18 @@ def build_config_parser():
     set_city_parser.add_argument(
         "default_city",
         nargs="+",
-        help="City to use by default",
+        help="Default city name",
     )
 
     set_days_parser = subparsers.add_parser(
         "set-days",
-        help="Set the default forecast length",
+        help="Set the default number of forecast days",
     )
 
     set_days_parser.add_argument(
         "forecast_days",
         type=int,
-        help="Number of forecast days (1-7)",
+        help="Forecast days (1-7)",
     )
 
     set_units_parser = subparsers.add_parser(
@@ -118,12 +127,12 @@ def build_config_parser():
             "metric",
             "imperial",
         ],
-        help="Preferred measurement system",
+        help="Default unit system",
     )
 
     subparsers.add_parser(
         "show",
-        help="Show current configuration",
+        help="Show the current configuration",
     )
 
     subparsers.add_parser(
@@ -136,16 +145,21 @@ def build_config_parser():
 
 def parse_arguments():
     """
-    Determine whether the user requested a normal
-    weather lookup or a configuration command.
+    Parse Weather CLI arguments.
+
+    The CLI intentionally uses separate weather and configuration
+    parsers so arbitrary city names do not conflict with argparse
+    subcommands.
     """
 
-    arguments = sys.argv[1:]
+    raw_args = sys.argv[1:]
 
-    if arguments and arguments[0] == "config":
+    if raw_args and raw_args[0] == "config":
         parser = build_config_parser()
 
-        args = parser.parse_args(arguments[1:])
+        args = parser.parse_args(
+            raw_args[1:]
+        )
 
         args.command = "config"
 
@@ -153,196 +167,21 @@ def parse_arguments():
 
     parser = build_weather_parser()
 
-    args = parser.parse_args(arguments)
+    args = parser.parse_args(
+        raw_args
+    )
 
     args.command = "weather"
 
     return args
 
 
-def display_location_choices(locations):
-    """
-    Display multiple matching locations in
-    a Rich table.
-    """
-
-    table = Table(
-        title="Multiple Locations Found",
-        show_header=True,
-        header_style="bold",
-    )
-
-    table.add_column(
-        "#",
-        justify="right",
-    )
-
-    table.add_column("City")
-    table.add_column("State / Region")
-    table.add_column("Country")
-    table.add_column("Timezone")
-
-    for index, location in enumerate(
-        locations,
-        start=1,
-    ):
-        table.add_row(
-            str(index),
-            location["name"],
-            location["state"] or "-",
-            location["country"] or "-",
-            location["timezone"] or "-",
-        )
-
-    console.print()
-    console.print(table)
-
-
-def choose_location(locations):
-    """
-    Allow the user to choose between multiple
-    geocoding results.
-    """
-
-    if len(locations) == 1:
-        return locations[0]
-
-    display_location_choices(locations)
-
-    while True:
-        choice = console.input(
-            f"\nSelect location [1-{len(locations)}], or Q to quit: "
-        ).strip()
-
-        if choice.lower() == "q":
-            logger.info("User cancelled location selection")
-
-            return None
-
-        try:
-            index = int(choice)
-
-            if 1 <= index <= len(locations):
-                selected = locations[index - 1]
-
-                logger.info(
-                    ("Location selected: name=%s state=%s country=%s"),
-                    selected["name"],
-                    selected["state"],
-                    selected["country"],
-                )
-
-                return selected
-
-        except ValueError:
-            pass
-
-        console.print("[yellow]Please enter a valid number or Q to quit.[/yellow]")
-
-
-def display_configuration():
-    """
-    Display the current saved configuration.
-    """
-
-    config = load_config()
-
-    units = "metric" if config["metric"] else "imperial"
-
-    console.print()
-    console.print("[bold]Weather CLI Configuration[/bold]")
-
-    console.print(f"Default city:     {config['default_city'] or 'Not set'}")
-
-    console.print(f"Default units:    {units}")
-
-    console.print(f"Forecast days:    {config['forecast_days']}")
-
-
-def handle_config(args):
-    """
-    Process configuration commands.
-    """
-
-    if args.config_command == "set-city":
-        city = " ".join(args.default_city)
-
-        set_default_city(city)
-
-        logger.info(
-            "Default city updated: %s",
-            city,
-        )
-
-        console.print(f"[green]Default city set to {city}.[/green]")
-
-        return
-
-    if args.config_command == "set-days":
-        try:
-            set_forecast_days(args.forecast_days)
-
-        except ValueError as error:
-            logger.warning(
-                ("Invalid default forecast days requested: %s"),
-                args.forecast_days,
-            )
-
-            console.print(f"[red]Error:[/red] {error}")
-
-            return
-
-        logger.info(
-            "Default forecast days updated: %s",
-            args.forecast_days,
-        )
-
-        console.print(
-            f"[green]Default forecast days set to {args.forecast_days}.[/green]"
-        )
-
-        return
-
-    if args.config_command == "set-units":
-        metric = args.units == "metric"
-
-        set_metric(metric)
-
-        logger.info(
-            "Default units updated: %s",
-            args.units,
-        )
-
-        console.print(f"[green]Default units set to {args.units}.[/green]")
-
-        return
-
-    if args.config_command == "show":
-        logger.info("Displaying configuration")
-
-        display_configuration()
-
-        return
-
-    if args.config_command == "clear-cache":
-        clear_cache()
-
-        logger.info("Weather cache cleared")
-
-        console.print("[green]Weather cache cleared.[/green]")
-
-        return
-
-    console.print("Use 'weather config --help' to see configuration commands.")
-
-
 def resolve_preferences(args):
     """
-    Combine command-line arguments with saved
-    configuration values.
+    Resolve city, units, and forecast days.
 
-    Command-line values take precedence over
-    saved defaults.
+    Command-line arguments take precedence over saved
+    configuration values.
     """
 
     config = load_config()
@@ -350,22 +189,25 @@ def resolve_preferences(args):
     if args.city:
         city = " ".join(args.city)
     else:
-        city = config["default_city"]
+        city = config.get("default_city")
 
     if args.metric:
         metric = True
-
     elif args.imperial:
         metric = False
-
     else:
-        metric = config["metric"]
+        metric = config.get(
+            "metric",
+            False,
+        )
 
     if args.days is not None:
         days = args.days
-
     else:
-        days = config["forecast_days"]
+        days = config.get(
+            "forecast_days",
+            3,
+        )
 
     return (
         city,
@@ -374,83 +216,294 @@ def resolve_preferences(args):
     )
 
 
-def run_weather(args):
-    """
-    Perform the weather lookup.
-    """
+def choose_location(locations):
+    """Allow the user to choose from multiple location matches."""
 
-    city, metric, days = resolve_preferences(args)
+    if not locations:
+        return None
 
-    if city is None:
-        logger.info("Weather command used without a city")
+    if len(locations) == 1:
+        return locations[0]
 
-        console.print()
-        console.print("[yellow]No city specified.[/yellow]")
-
-        console.print()
-        console.print("Try:")
-
-        console.print("  weather Atlanta")
-
-        console.print()
-        console.print("Or set a default city:")
-
-        console.print("  weather config set-city Atlanta")
-
-        return
-
-    if not 1 <= days <= 7:
-        logger.warning(
-            "Invalid forecast day count: %s",
-            days,
-        )
-
-        console.print("[red]Error:[/red] --days must be between 1 and 7.")
-
-        return
-
-    logger.info(
-        ("Weather lookup started: city=%s days=%s metric=%s forecast=%s"),
-        city,
-        days,
-        metric,
-        args.forecast,
+    table = Table(
+        title="Multiple locations found"
     )
 
-    console.print()
-    console.print(f"Searching for [bold]{city}[/bold]...")
+    table.add_column(
+        "#",
+        justify="right",
+    )
 
-    try:
-        locations = search_locations(city)
+    table.add_column(
+        "City"
+    )
 
-        if not locations:
-            logger.info(
-                "No locations found: %s",
-                city,
+    table.add_column(
+        "State"
+    )
+
+    table.add_column(
+        "Country"
+    )
+
+    for index, location in enumerate(
+        locations,
+        start=1,
+    ):
+        table.add_row(
+            str(index),
+            location.get(
+                "name",
+                "",
+            ),
+            location.get(
+                "state",
+                "",
+            ),
+            location.get(
+                "country",
+                "",
+            ),
+        )
+
+    console.print(table)
+
+    while True:
+        selection = console.input(
+            "[bold]Choose a location "
+            "(number or q to cancel): [/bold]"
+        )
+
+        selection = selection.strip()
+
+        if selection.lower() == "q":
+            return None
+
+        try:
+            index = int(selection)
+        except ValueError:
+            console.print(
+                "[red]Please enter a valid number "
+                "or q to cancel.[/red]"
             )
 
-            console.print()
-            console.print(f"[red]Could not find '{city}'.[/red]")
+            continue
 
-            console.print("Try including a state, province, or country.")
+        if not 1 <= index <= len(locations):
+            console.print(
+                "[red]That location number is "
+                "out of range.[/red]"
+            )
+
+            continue
+
+        return locations[index - 1]
+
+
+def display_configuration():
+    """Display the current Weather CLI configuration."""
+
+    config = load_config()
+
+    table = Table(
+        title="Weather CLI Configuration"
+    )
+
+    table.add_column(
+        "Setting"
+    )
+
+    table.add_column(
+        "Value"
+    )
+
+    default_city = (
+        config.get("default_city")
+        or "Not configured"
+    )
+
+    units = (
+        "metric"
+        if config.get(
+            "metric",
+            False,
+        )
+        else "imperial"
+    )
+
+    forecast_days = config.get(
+        "forecast_days",
+        3,
+    )
+
+    table.add_row(
+        "Default city",
+        str(default_city),
+    )
+
+    table.add_row(
+        "Units",
+        units,
+    )
+
+    table.add_row(
+        "Forecast days",
+        str(forecast_days),
+    )
+
+    console.print(table)
+
+
+def handle_config(args):
+    """Handle Weather CLI configuration commands."""
+
+    if args.config_command == "set-city":
+        city = " ".join(
+            args.default_city
+        )
+
+        set_default_city(city)
+
+        console.print(
+            f"[green]Default city set to "
+            f"{city}.[/green]"
+        )
+
+        return
+
+    if args.config_command == "set-days":
+        try:
+            set_forecast_days(
+                args.forecast_days
+            )
+        except ValueError as error:
+            console.print(
+                f"[red]{error}[/red]"
+            )
+
+            return
+
+        console.print(
+            "[green]Default forecast days "
+            f"set to {args.forecast_days}."
+            "[/green]"
+        )
+
+        return
+
+    if args.config_command == "set-units":
+        metric = (
+            args.units == "metric"
+        )
+
+        set_metric(metric)
+
+        console.print(
+            "[green]Default units set to "
+            f"{args.units}.[/green]"
+        )
+
+        return
+
+    if args.config_command == "show":
+        display_configuration()
+        return
+
+    if args.config_command == "clear-cache":
+        clear_cache()
+
+        console.print(
+            "[green]Weather cache cleared."
+            "[/green]"
+        )
+
+        return
+
+    console.print(
+        "Use [bold]weather config --help[/bold] "
+        "to see available configuration commands."
+    )
+
+
+def run_weather(args):
+    """Run a weather lookup."""
+
+    try:
+        (
+            city,
+            metric,
+            days,
+        ) = resolve_preferences(args)
+
+        if not city:
+            console.print(
+                "[red]No city specified.[/red]\n"
+                "\n"
+                "Provide a city on the command line:\n"
+                "  weather Atlanta\n"
+                "\n"
+                "Or configure a default city:\n"
+                "  weather config set-city Atlanta"
+            )
+
+            return
+
+        if not 1 <= days <= 7:
+            console.print(
+                "[red]Forecast days must be "
+                "between 1 and 7.[/red]"
+            )
 
             return
 
         logger.info(
-            "Location search returned %s matches",
-            len(locations),
+            "Searching for location: %s",
+            city,
         )
 
-        location = choose_location(locations)
+        locations = search_locations(
+            city
+        )
 
-        if location is None:
-            console.print("Search cancelled.")
+        if not locations:
+            console.print(
+                f"[red]Could not find "
+                f"'{city}'.[/red]"
+            )
 
             return
 
+        location = choose_location(
+            locations
+        )
+
+        if location is None:
+            console.print(
+                "[yellow]Search cancelled."
+                "[/yellow]"
+            )
+
+            return
+
+        latitude = location[
+            "latitude"
+        ]
+
+        longitude = location[
+            "longitude"
+        ]
+
+        logger.info(
+            "Retrieving weather for %s",
+            location.get(
+                "name",
+                city,
+            ),
+        )
+
         weather = get_weather(
-            location["latitude"],
-            location["longitude"],
+            latitude,
+            longitude,
             days,
             metric,
         )
@@ -467,85 +520,88 @@ def run_weather(args):
                 metric,
             )
 
-        logger.info(
-            ("Weather lookup completed: city=%s state=%s country=%s"),
-            location["name"],
-            location["state"],
-            location["country"],
+    except requests.exceptions.Timeout:
+        logger.exception(
+            "Weather request timed out"
         )
 
-    except requests.exceptions.Timeout:
-        logger.exception("Weather request timed out")
-
-        console.print()
-        console.print("[red]Error:[/red] Weather service request timed out.")
+        console.print(
+            "[red]The weather request timed out. "
+            "Please try again.[/red]"
+        )
 
     except requests.exceptions.ConnectionError:
-        logger.exception("Weather service connection failed")
-
-        console.print()
-        console.print("[red]Error:[/red] Unable to connect to the weather service.")
-
-        console.print("Check your internet connection.")
-
-    except requests.exceptions.HTTPError as error:
-        logger.exception("Weather service HTTP error")
-
-        console.print()
-        console.print(f"[red]HTTP error:[/red] {error}")
-
-    except requests.exceptions.RequestException as error:
-        logger.exception("Weather service request failed")
-
-        console.print()
-        console.print(f"[red]Request error:[/red] {error}")
-
-    except KeyError as error:
-        logger.exception("Required weather data field missing")
-
-        console.print()
-        console.print(
-            "[red]Data error:[/red] The weather service returned unexpected data."
+        logger.exception(
+            "Unable to connect to weather service"
         )
 
-        console.print(f"Missing field: {error}")
+        console.print(
+            "[red]Unable to connect to the weather "
+            "service. Check your internet connection."
+            "[/red]"
+        )
+
+    except requests.exceptions.HTTPError as error:
+        logger.exception(
+            "Weather service returned an HTTP error"
+        )
+
+        console.print(
+            "[red]HTTP error while contacting the "
+            f"weather service: {error}[/red]"
+        )
+
+    except requests.exceptions.RequestException as error:
+        logger.exception(
+            "Weather request failed"
+        )
+
+        console.print(
+            "[red]Request error while contacting the "
+            f"weather service: {error}[/red]"
+        )
+
+    except KeyError as error:
+        logger.exception(
+            "Unexpected weather data"
+        )
+
+        console.print(
+            "[red]The weather service returned "
+            f"unexpected data: {error}[/red]"
+        )
 
     except ValueError as error:
-        logger.exception("Weather data processing failed")
+        logger.exception(
+            "Invalid weather data"
+        )
 
-        console.print()
-        console.print(f"[red]Data error:[/red] {error}")
+        console.print(
+            f"[red]Data error: {error}[/red]"
+        )
 
-    except Exception:
-        logger.exception("Unexpected Weather CLI error")
+    except Exception as error:
+        logger.exception(
+            "Unexpected Weather CLI error"
+        )
 
-        console.print()
-        console.print("[red]Unexpected error:[/red] Weather CLI encountered a problem.")
-
-        console.print("Check the application log for additional details.")
+        console.print(
+            f"[red]Unexpected error: {error}[/red]"
+        )
 
 
 def main():
-    """
-    Main Weather CLI entry point.
-    """
+    """Weather CLI entry point."""
 
     configure_logging()
 
-    logger.info("Weather CLI started")
-
     args = parse_arguments()
 
-    try:
-        if args.command == "config":
-            handle_config(args)
+    if args.command == "config":
+        handle_config(args)
+        return
 
-            return
-
-        run_weather(args)
-
-    finally:
-        logger.info("Weather CLI finished")
+    run_weather(args)
 
 
 if __name__ == "__main__":

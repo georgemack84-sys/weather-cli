@@ -18,7 +18,6 @@ from weather_cli.config import (
 from weather_cli.display import display_current_weather, display_forecast
 from weather_cli.logging_config import configure_logging
 
-
 console = Console()
 logger = logging.getLogger(__name__)
 

@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+
 APP_DIRECTORY = Path.home() / ".weather-cli"
 CONFIG_FILE = APP_DIRECTORY / "config.json"
 
@@ -13,7 +14,13 @@ DEFAULT_CONFIG = {
 
 
 def load_config():
-    """Load configuration from disk."""
+    """
+    Load the Weather CLI configuration.
+
+    If the configuration file does not exist, cannot be read,
+    contains invalid JSON, or does not contain a dictionary,
+    return a copy of DEFAULT_CONFIG.
+    """
 
     if not CONFIG_FILE.exists():
         return DEFAULT_CONFIG.copy()
@@ -25,17 +32,32 @@ def load_config():
         ) as file:
             saved_config = json.load(file)
 
-    except (OSError, json.JSONDecodeError):
+    except (
+        OSError,
+        json.JSONDecodeError,
+    ):
+        return DEFAULT_CONFIG.copy()
+
+    if not isinstance(saved_config, dict):
         return DEFAULT_CONFIG.copy()
 
     config = DEFAULT_CONFIG.copy()
-    config.update(saved_config)
+
+    config.update(
+        {
+            key: value
+            for key, value in saved_config.items()
+            if key in DEFAULT_CONFIG
+        }
+    )
 
     return config
 
 
 def save_config(config):
-    """Save configuration to disk."""
+    """
+    Save the Weather CLI configuration to disk.
+    """
 
     APP_DIRECTORY.mkdir(
         parents=True,
@@ -54,33 +76,70 @@ def save_config(config):
 
 
 def set_default_city(city):
-    """Set the user's default city."""
+    """
+    Set the default city.
+
+    Passing None, an empty string, or whitespace-only text
+    clears the saved default city.
+    """
 
     config = load_config()
 
-    config["default_city"] = city
+    if city is None:
+        config["default_city"] = None
 
-    save_config(config)
+    else:
+        city = city.strip()
+
+        config["default_city"] = (
+            city
+            if city
+            else None
+        )
+
+    save_config(
+        config
+    )
 
 
 def set_metric(metric):
-    """Set the user's preferred unit system."""
+    """
+    Set the default measurement system.
+
+    True means metric.
+    False means imperial.
+    """
 
     config = load_config()
 
-    config["metric"] = metric
+    config["metric"] = bool(metric)
 
-    save_config(config)
+    save_config(
+        config
+    )
 
 
 def set_forecast_days(days):
-    """Set the default forecast length."""
+    """
+    Set the default forecast length.
+
+    Valid values are integers from 1 through 7.
+    """
+
+    if not isinstance(days, int):
+        raise TypeError(
+            "Forecast days must be an integer."
+        )
 
     if not 1 <= days <= 7:
-        raise ValueError("Forecast days must be between 1 and 7.")
+        raise ValueError(
+            "Forecast days must be between 1 and 7."
+        )
 
     config = load_config()
 
     config["forecast_days"] = days
 
-    save_config(config)
+    save_config(
+        config
+    )

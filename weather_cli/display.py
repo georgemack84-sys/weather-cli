@@ -5,6 +5,7 @@ from rich.text import Text
 
 from weather_cli.weather_codes import get_weather_description
 
+
 console = Console()
 
 
@@ -32,14 +33,14 @@ def format_location(location):
 
     parts = [location["name"]]
 
-    if location["state"]:
+    if location.get("state"):
         parts.append(location["state"])
 
     return ", ".join(parts)
 
 
 def get_units(metric):
-    """Return display units."""
+    """Return display units for metric or imperial output."""
 
     if metric:
         return {
@@ -56,7 +57,7 @@ def get_units(metric):
 
 
 def get_weather_icon(code):
-    """Return a simple weather symbol for a WMO weather code."""
+    """Return a weather symbol for an Open-Meteo weather code."""
 
     if code == 0:
         return "☀"
@@ -70,38 +71,91 @@ def get_weather_icon(code):
     if code in (45, 48):
         return "🌫"
 
-    if code in (51, 53, 55, 56, 57):
+    if code in (
+        51,
+        53,
+        55,
+        56,
+        57,
+    ):
         return "🌦"
 
-    if code in (61, 63, 65, 66, 67):
+    if code in (
+        61,
+        63,
+        65,
+        66,
+        67,
+    ):
         return "🌧"
 
-    if code in (71, 73, 75, 77, 85, 86):
+    if code in (
+        71,
+        73,
+        75,
+        77,
+        85,
+        86,
+    ):
         return "❄"
 
-    if code in (80, 81, 82):
+    if code in (
+        80,
+        81,
+        82,
+    ):
         return "🌦"
 
-    if code in (95, 96, 99):
+    if code in (
+        95,
+        96,
+        99,
+    ):
         return "⛈"
 
     return "?"
 
 
+def format_time(value):
+    """
+    Convert an Open-Meteo datetime such as
+    2026-08-18T06:58 into 06:58.
+
+    Values without a T separator are returned unchanged.
+    """
+
+    if not value:
+        return "-"
+
+    if "T" in value:
+        return value.split("T", maxsplit=1)[1]
+
+    return value
+
+
 def display_current_weather(location, weather, metric):
-    """Display current weather using a Rich panel."""
+    """Display current weather conditions using a Rich panel."""
 
     current = weather["current"]
     units = get_units(metric)
 
     weather_code = current["weather_code"]
 
-    condition = get_weather_description(weather_code)
-    icon = get_weather_icon(weather_code)
+    condition = get_weather_description(
+        weather_code
+    )
 
-    wind_direction = get_wind_direction(current["wind_direction_10m"])
+    icon = get_weather_icon(
+        weather_code
+    )
 
-    location_name = format_location(location)
+    wind_direction = get_wind_direction(
+        current["wind_direction_10m"]
+    )
+
+    location_name = format_location(
+        location
+    )
 
     content = Text()
 
@@ -112,29 +166,66 @@ def display_current_weather(location, weather, metric):
 
     content.append("Temperature     ")
     content.append(
-        f"{current['temperature_2m']} {units['temperature']}\n",
+        (
+            f"{current['temperature_2m']} "
+            f"{units['temperature']}\n"
+        ),
         style="bold",
     )
 
     content.append("Feels Like      ")
-    content.append(f"{current['apparent_temperature']} {units['temperature']}\n")
+    content.append(
+        (
+            f"{current['apparent_temperature']} "
+            f"{units['temperature']}\n"
+        )
+    )
 
     content.append("Humidity        ")
-    content.append(f"{current['relative_humidity_2m']}%\n")
+    content.append(
+        f"{current['relative_humidity_2m']}%\n"
+    )
 
     content.append("Precipitation   ")
-    content.append(f"{current['precipitation']} {units['precipitation']}\n")
+    content.append(
+        (
+            f"{current['precipitation']} "
+            f"{units['precipitation']}\n"
+        )
+    )
 
     content.append("Wind            ")
-    content.append(f"{current['wind_speed_10m']} {units['wind']} {wind_direction}\n")
+    content.append(
+        (
+            f"{current['wind_speed_10m']} "
+            f"{units['wind']} "
+            f"{wind_direction}\n"
+        )
+    )
 
     content.append("Wind Gusts      ")
-    content.append(f"{current['wind_gusts_10m']} {units['wind']}")
+    content.append(
+        (
+            f"{current['wind_gusts_10m']} "
+            f"{units['wind']}"
+        )
+    )
 
-    subtitle_parts = [location["country"]]
+    subtitle_parts = []
 
-    if location["timezone"]:
-        subtitle_parts.append(location["timezone"])
+    if location.get("country"):
+        subtitle_parts.append(
+            location["country"]
+        )
+
+    if location.get("timezone"):
+        subtitle_parts.append(
+            location["timezone"]
+        )
+
+    subtitle = " • ".join(
+        subtitle_parts
+    )
 
     console.print()
 
@@ -142,7 +233,7 @@ def display_current_weather(location, weather, metric):
         Panel(
             content,
             title=f"[bold]{location_name}[/bold]",
-            subtitle=" • ".join(subtitle_parts),
+            subtitle=subtitle or None,
             expand=False,
             padding=(1, 3),
         )
@@ -150,7 +241,7 @@ def display_current_weather(location, weather, metric):
 
 
 def display_forecast(weather, metric):
-    """Display daily forecast using a Rich table."""
+    """Display a daily forecast using a Rich table."""
 
     daily = weather["daily"]
     units = get_units(metric)
@@ -163,34 +254,77 @@ def display_forecast(weather, metric):
 
     table.add_column("Date")
     table.add_column("Weather")
-    table.add_column("High", justify="right")
-    table.add_column("Low", justify="right")
-    table.add_column("Rain", justify="right")
-    table.add_column("Wind", justify="right")
+
+    table.add_column(
+        "High",
+        justify="right",
+    )
+
+    table.add_column(
+        "Low",
+        justify="right",
+    )
+
+    table.add_column(
+        "Rain",
+        justify="right",
+    )
+
+    table.add_column(
+        "Precip",
+        justify="right",
+    )
+
+    table.add_column(
+        "Wind",
+        justify="right",
+    )
+
     table.add_column("Sunrise")
     table.add_column("Sunset")
 
-    for index, date in enumerate(daily["time"]):
-        code = daily["weather_code"][index]
+    for index, date in enumerate(
+        daily["time"]
+    ):
+        code = daily[
+            "weather_code"
+        ][index]
 
-        condition = get_weather_description(code)
-        icon = get_weather_icon(code)
+        condition = get_weather_description(
+            code
+        )
 
-        high = daily["temperature_2m_max"][index]
-        low = daily["temperature_2m_min"][index]
+        icon = get_weather_icon(
+            code
+        )
 
-        rain_probability = daily["precipitation_probability_max"][index]
+        high = daily[
+            "temperature_2m_max"
+        ][index]
 
-        max_wind = daily["wind_speed_10m_max"][index]
+        low = daily[
+            "temperature_2m_min"
+        ][index]
 
-        sunrise = daily["sunrise"][index]
-        sunset = daily["sunset"][index]
+        rain_probability = daily[
+            "precipitation_probability_max"
+        ][index]
 
-        if "T" in sunrise:
-            sunrise = sunrise.split("T")[1]
+        precipitation = daily[
+            "precipitation_sum"
+        ][index]
 
-        if "T" in sunset:
-            sunset = sunset.split("T")[1]
+        max_wind = daily[
+            "wind_speed_10m_max"
+        ][index]
+
+        sunrise = format_time(
+            daily["sunrise"][index]
+        )
+
+        sunset = format_time(
+            daily["sunset"][index]
+        )
 
         table.add_row(
             date,
@@ -198,6 +332,10 @@ def display_forecast(weather, metric):
             f"{high} {units['temperature']}",
             f"{low} {units['temperature']}",
             f"{rain_probability}%",
+            (
+                f"{precipitation} "
+                f"{units['precipitation']}"
+            ),
             f"{max_wind} {units['wind']}",
             sunrise,
             sunset,

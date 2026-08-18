@@ -5,7 +5,6 @@ from rich.text import Text
 
 from weather_cli.weather_codes import get_weather_description
 
-
 console = Console()
 
 
@@ -141,21 +140,13 @@ def display_current_weather(location, weather, metric):
 
     weather_code = current["weather_code"]
 
-    condition = get_weather_description(
-        weather_code
-    )
+    condition = get_weather_description(weather_code)
 
-    icon = get_weather_icon(
-        weather_code
-    )
+    icon = get_weather_icon(weather_code)
 
-    wind_direction = get_wind_direction(
-        current["wind_direction_10m"]
-    )
+    wind_direction = get_wind_direction(current["wind_direction_10m"])
 
-    location_name = format_location(
-        location
-    )
+    location_name = format_location(location)
 
     content = Text()
 
@@ -166,66 +157,34 @@ def display_current_weather(location, weather, metric):
 
     content.append("Temperature     ")
     content.append(
-        (
-            f"{current['temperature_2m']} "
-            f"{units['temperature']}\n"
-        ),
+        (f"{current['temperature_2m']} {units['temperature']}\n"),
         style="bold",
     )
 
     content.append("Feels Like      ")
-    content.append(
-        (
-            f"{current['apparent_temperature']} "
-            f"{units['temperature']}\n"
-        )
-    )
+    content.append(f"{current['apparent_temperature']} {units['temperature']}\n")
 
     content.append("Humidity        ")
-    content.append(
-        f"{current['relative_humidity_2m']}%\n"
-    )
+    content.append(f"{current['relative_humidity_2m']}%\n")
 
     content.append("Precipitation   ")
-    content.append(
-        (
-            f"{current['precipitation']} "
-            f"{units['precipitation']}\n"
-        )
-    )
+    content.append(f"{current['precipitation']} {units['precipitation']}\n")
 
     content.append("Wind            ")
-    content.append(
-        (
-            f"{current['wind_speed_10m']} "
-            f"{units['wind']} "
-            f"{wind_direction}\n"
-        )
-    )
+    content.append(f"{current['wind_speed_10m']} {units['wind']} {wind_direction}\n")
 
     content.append("Wind Gusts      ")
-    content.append(
-        (
-            f"{current['wind_gusts_10m']} "
-            f"{units['wind']}"
-        )
-    )
+    content.append(f"{current['wind_gusts_10m']} {units['wind']}")
 
     subtitle_parts = []
 
     if location.get("country"):
-        subtitle_parts.append(
-            location["country"]
-        )
+        subtitle_parts.append(location["country"])
 
     if location.get("timezone"):
-        subtitle_parts.append(
-            location["timezone"]
-        )
+        subtitle_parts.append(location["timezone"])
 
-    subtitle = " • ".join(
-        subtitle_parts
-    )
+    subtitle = " • ".join(subtitle_parts)
 
     console.print()
 
@@ -283,48 +242,26 @@ def display_forecast(weather, metric):
     table.add_column("Sunrise")
     table.add_column("Sunset")
 
-    for index, date in enumerate(
-        daily["time"]
-    ):
-        code = daily[
-            "weather_code"
-        ][index]
+    for index, date in enumerate(daily["time"]):
+        code = daily["weather_code"][index]
 
-        condition = get_weather_description(
-            code
-        )
+        condition = get_weather_description(code)
 
-        icon = get_weather_icon(
-            code
-        )
+        icon = get_weather_icon(code)
 
-        high = daily[
-            "temperature_2m_max"
-        ][index]
+        high = daily["temperature_2m_max"][index]
 
-        low = daily[
-            "temperature_2m_min"
-        ][index]
+        low = daily["temperature_2m_min"][index]
 
-        rain_probability = daily[
-            "precipitation_probability_max"
-        ][index]
+        rain_probability = daily["precipitation_probability_max"][index]
 
-        precipitation = daily[
-            "precipitation_sum"
-        ][index]
+        precipitation = daily["precipitation_sum"][index]
 
-        max_wind = daily[
-            "wind_speed_10m_max"
-        ][index]
+        max_wind = daily["wind_speed_10m_max"][index]
 
-        sunrise = format_time(
-            daily["sunrise"][index]
-        )
+        sunrise = format_time(daily["sunrise"][index])
 
-        sunset = format_time(
-            daily["sunset"][index]
-        )
+        sunset = format_time(daily["sunset"][index])
 
         table.add_row(
             date,
@@ -332,10 +269,7 @@ def display_forecast(weather, metric):
             f"{high} {units['temperature']}",
             f"{low} {units['temperature']}",
             f"{rain_probability}%",
-            (
-                f"{precipitation} "
-                f"{units['precipitation']}"
-            ),
+            (f"{precipitation} {units['precipitation']}"),
             f"{max_wind} {units['wind']}",
             sunrise,
             sunset,

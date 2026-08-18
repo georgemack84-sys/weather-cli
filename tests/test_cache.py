@@ -1,5 +1,3 @@
-import time
-
 from weather_cli import cache
 
 
@@ -15,13 +13,9 @@ def test_save_and_load_cache(tmp_path, monkeypatch):
         {"temperature": 72},
     )
 
-    result = cache.load_cache(
-        "test-key"
-    )
+    result = cache.load_cache("test-key")
 
-    assert result == {
-        "temperature": 72
-    }
+    assert result == {"temperature": 72}
 
 
 def test_expired_cache_returns_none(
@@ -57,9 +51,7 @@ def test_missing_cache_returns_none(
         tmp_path,
     )
 
-    result = cache.load_cache(
-        "does-not-exist"
-    )
+    result = cache.load_cache("does-not-exist")
 
     assert result is None
 
@@ -86,6 +78,4 @@ def test_clear_cache(
 
     cache.clear_cache()
 
-    assert list(
-        tmp_path.glob("*.json")
-    ) == []
+    assert list(tmp_path.glob("*.json")) == []

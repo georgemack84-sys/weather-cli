@@ -2,7 +2,6 @@ import argparse
 
 import requests
 
-
 WEATHER_CODES = {
     0: "Clear Sky",
     1: "Mainly Clear",
@@ -184,9 +183,7 @@ def display_current_weather(location, weather, metric):
         "Unknown",
     )
 
-    wind_direction = get_wind_direction(
-        current["wind_direction_10m"]
-    )
+    wind_direction = get_wind_direction(current["wind_direction_10m"])
 
     location_name = format_location(location)
 
@@ -205,34 +202,15 @@ def display_current_weather(location, weather, metric):
     print("-" * 54)
 
     print(f"Conditions:    {condition}")
-    print(
-        f"Temperature:   "
-        f"{current['temperature_2m']} {temperature_symbol}"
-    )
-    print(
-        f"Feels Like:    "
-        f"{current['apparent_temperature']} {temperature_symbol}"
-    )
-    print(
-        f"Humidity:      "
-        f"{current['relative_humidity_2m']}%"
-    )
-    print(
-        f"Precipitation: "
-        f"{current['precipitation']} {precipitation_unit}"
-    )
+    print(f"Temperature:   {current['temperature_2m']} {temperature_symbol}")
+    print(f"Feels Like:    {current['apparent_temperature']} {temperature_symbol}")
+    print(f"Humidity:      {current['relative_humidity_2m']}%")
+    print(f"Precipitation: {current['precipitation']} {precipitation_unit}")
 
     print("-" * 54)
 
-    print(
-        f"Wind:          "
-        f"{current['wind_speed_10m']} {wind_unit} "
-        f"{wind_direction}"
-    )
-    print(
-        f"Wind Gusts:    "
-        f"{current['wind_gusts_10m']} {wind_unit}"
-    )
+    print(f"Wind:          {current['wind_speed_10m']} {wind_unit} {wind_direction}")
+    print(f"Wind Gusts:    {current['wind_gusts_10m']} {wind_unit}")
 
     print("=" * 54)
 

@@ -4,7 +4,6 @@ import requests
 
 from weather_cli.cache import load_cache, save_cache
 
-
 GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search"
 FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
 
@@ -83,19 +82,9 @@ def build_weather_cache_key(
     wrong cached response.
     """
 
-    unit_system = (
-        "metric"
-        if metric
-        else "imperial"
-    )
+    unit_system = "metric" if metric else "imperial"
 
-    return (
-        f"weather_"
-        f"{latitude}_"
-        f"{longitude}_"
-        f"{days}_"
-        f"{unit_system}"
-    )
+    return f"weather_{latitude}_{longitude}_{days}_{unit_system}"
 
 
 def get_weather(
@@ -119,9 +108,7 @@ def get_weather(
         metric,
     )
 
-    cached_weather = load_cache(
-        cache_key
-    )
+    cached_weather = load_cache(cache_key)
 
     if cached_weather is not None:
         logger.info(
@@ -176,10 +163,7 @@ def get_weather(
     }
 
     logger.info(
-        (
-            "Requesting weather API: "
-            "lat=%s lon=%s days=%s metric=%s"
-        ),
+        ("Requesting weather API: lat=%s lon=%s days=%s metric=%s"),
         latitude,
         longitude,
         days,
@@ -197,10 +181,7 @@ def get_weather(
     weather = response.json()
 
     logger.info(
-        (
-            "Weather API request successful: "
-            "lat=%s lon=%s days=%s metric=%s"
-        ),
+        ("Weather API request successful: lat=%s lon=%s days=%s metric=%s"),
         latitude,
         longitude,
         days,

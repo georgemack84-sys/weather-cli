@@ -1,7 +1,6 @@
 import json
 from pathlib import Path
 
-
 APP_DIRECTORY = Path.home() / ".weather-cli"
 CONFIG_FILE = APP_DIRECTORY / "config.json"
 
@@ -78,9 +77,7 @@ def set_forecast_days(days):
     """Set the default forecast length."""
 
     if not 1 <= days <= 7:
-        raise ValueError(
-            "Forecast days must be between 1 and 7."
-        )
+        raise ValueError("Forecast days must be between 1 and 7.")
 
     config = load_config()
 

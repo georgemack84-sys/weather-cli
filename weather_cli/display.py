@@ -5,7 +5,6 @@ from rich.text import Text
 
 from weather_cli.weather_codes import get_weather_description
 
-
 console = Console()
 
 
@@ -100,9 +99,7 @@ def display_current_weather(location, weather, metric):
     condition = get_weather_description(weather_code)
     icon = get_weather_icon(weather_code)
 
-    wind_direction = get_wind_direction(
-        current["wind_direction_10m"]
-    )
+    wind_direction = get_wind_direction(current["wind_direction_10m"])
 
     location_name = format_location(location)
 
@@ -115,40 +112,24 @@ def display_current_weather(location, weather, metric):
 
     content.append("Temperature     ")
     content.append(
-        f"{current['temperature_2m']} "
-        f"{units['temperature']}\n",
+        f"{current['temperature_2m']} {units['temperature']}\n",
         style="bold",
     )
 
     content.append("Feels Like      ")
-    content.append(
-        f"{current['apparent_temperature']} "
-        f"{units['temperature']}\n"
-    )
+    content.append(f"{current['apparent_temperature']} {units['temperature']}\n")
 
     content.append("Humidity        ")
-    content.append(
-        f"{current['relative_humidity_2m']}%\n"
-    )
+    content.append(f"{current['relative_humidity_2m']}%\n")
 
     content.append("Precipitation   ")
-    content.append(
-        f"{current['precipitation']} "
-        f"{units['precipitation']}\n"
-    )
+    content.append(f"{current['precipitation']} {units['precipitation']}\n")
 
     content.append("Wind            ")
-    content.append(
-        f"{current['wind_speed_10m']} "
-        f"{units['wind']} "
-        f"{wind_direction}\n"
-    )
+    content.append(f"{current['wind_speed_10m']} {units['wind']} {wind_direction}\n")
 
     content.append("Wind Gusts      ")
-    content.append(
-        f"{current['wind_gusts_10m']} "
-        f"{units['wind']}"
-    )
+    content.append(f"{current['wind_gusts_10m']} {units['wind']}")
 
     subtitle_parts = [location["country"]]
 
@@ -198,13 +179,9 @@ def display_forecast(weather, metric):
         high = daily["temperature_2m_max"][index]
         low = daily["temperature_2m_min"][index]
 
-        rain_probability = daily[
-            "precipitation_probability_max"
-        ][index]
+        rain_probability = daily["precipitation_probability_max"][index]
 
-        max_wind = daily[
-            "wind_speed_10m_max"
-        ][index]
+        max_wind = daily["wind_speed_10m_max"][index]
 
         sunrise = daily["sunrise"][index]
         sunset = daily["sunset"][index]

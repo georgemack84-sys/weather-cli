@@ -161,9 +161,7 @@ def test_parse_arguments_weather():
     assert args.forecast is True
 
 
-@patch(
-    "weather_cli.cli.load_config"
-)
+@patch("weather_cli.cli.load_config")
 def test_resolve_preferences_uses_config(mock_load_config):
     mock_load_config.return_value = {
         "default_city": "Atlanta",
@@ -185,9 +183,7 @@ def test_resolve_preferences_uses_config(mock_load_config):
     assert days == 3
 
 
-@patch(
-    "weather_cli.cli.load_config"
-)
+@patch("weather_cli.cli.load_config")
 def test_resolve_preferences_cli_overrides_config(
     mock_load_config,
 ):
@@ -211,9 +207,7 @@ def test_resolve_preferences_cli_overrides_config(
     assert days == 5
 
 
-@patch(
-    "weather_cli.cli.load_config"
-)
+@patch("weather_cli.cli.load_config")
 def test_resolve_preferences_imperial_override(
     mock_load_config,
 ):

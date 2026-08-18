@@ -20,7 +20,6 @@ from weather_cli.display import (
 )
 from weather_cli.logging_config import configure_logging
 
-
 console = Console()
 logger = logging.getLogger(__name__)
 
@@ -32,10 +31,7 @@ def build_weather_parser():
 
     parser = argparse.ArgumentParser(
         prog="weather",
-        description=(
-            "Get current weather and forecasts "
-            "from the terminal."
-        ),
+        description=("Get current weather and forecasts from the terminal."),
     )
 
     parser.add_argument(
@@ -149,9 +145,7 @@ def parse_arguments():
     if arguments and arguments[0] == "config":
         parser = build_config_parser()
 
-        args = parser.parse_args(
-            arguments[1:]
-        )
+        args = parser.parse_args(arguments[1:])
 
         args.command = "config"
 
@@ -159,9 +153,7 @@ def parse_arguments():
 
     parser = build_weather_parser()
 
-    args = parser.parse_args(
-        arguments
-    )
+    args = parser.parse_args(arguments)
 
     args.command = "weather"
 
@@ -215,21 +207,15 @@ def choose_location(locations):
     if len(locations) == 1:
         return locations[0]
 
-    display_location_choices(
-        locations
-    )
+    display_location_choices(locations)
 
     while True:
         choice = console.input(
-            "\nSelect location "
-            f"[1-{len(locations)}], "
-            "or Q to quit: "
+            f"\nSelect location [1-{len(locations)}], or Q to quit: "
         ).strip()
 
         if choice.lower() == "q":
-            logger.info(
-                "User cancelled location selection"
-            )
+            logger.info("User cancelled location selection")
 
             return None
 
@@ -237,15 +223,10 @@ def choose_location(locations):
             index = int(choice)
 
             if 1 <= index <= len(locations):
-                selected = locations[
-                    index - 1
-                ]
+                selected = locations[index - 1]
 
                 logger.info(
-                    (
-                        "Location selected: "
-                        "name=%s state=%s country=%s"
-                    ),
+                    ("Location selected: name=%s state=%s country=%s"),
                     selected["name"],
                     selected["state"],
                     selected["country"],
@@ -256,12 +237,7 @@ def choose_location(locations):
         except ValueError:
             pass
 
-        console.print(
-            "[yellow]"
-            "Please enter a valid number "
-            "or Q to quit."
-            "[/yellow]"
-        )
+        console.print("[yellow]Please enter a valid number or Q to quit.[/yellow]")
 
 
 def display_configuration():
@@ -271,30 +247,16 @@ def display_configuration():
 
     config = load_config()
 
-    units = (
-        "metric"
-        if config["metric"]
-        else "imperial"
-    )
+    units = "metric" if config["metric"] else "imperial"
 
     console.print()
-    console.print(
-        "[bold]Weather CLI Configuration[/bold]"
-    )
+    console.print("[bold]Weather CLI Configuration[/bold]")
 
-    console.print(
-        "Default city:     "
-        f"{config['default_city'] or 'Not set'}"
-    )
+    console.print(f"Default city:     {config['default_city'] or 'Not set'}")
 
-    console.print(
-        f"Default units:    {units}"
-    )
+    console.print(f"Default units:    {units}")
 
-    console.print(
-        "Forecast days:    "
-        f"{config['forecast_days']}"
-    )
+    console.print(f"Forecast days:    {config['forecast_days']}")
 
 
 def handle_config(args):
@@ -303,45 +265,30 @@ def handle_config(args):
     """
 
     if args.config_command == "set-city":
-        city = " ".join(
-            args.default_city
-        )
+        city = " ".join(args.default_city)
 
-        set_default_city(
-            city
-        )
+        set_default_city(city)
 
         logger.info(
             "Default city updated: %s",
             city,
         )
 
-        console.print(
-            f"[green]"
-            f"Default city set to {city}."
-            f"[/green]"
-        )
+        console.print(f"[green]Default city set to {city}.[/green]")
 
         return
 
     if args.config_command == "set-days":
         try:
-            set_forecast_days(
-                args.forecast_days
-            )
+            set_forecast_days(args.forecast_days)
 
         except ValueError as error:
             logger.warning(
-                (
-                    "Invalid default forecast "
-                    "days requested: %s"
-                ),
+                ("Invalid default forecast days requested: %s"),
                 args.forecast_days,
             )
 
-            console.print(
-                f"[red]Error:[/red] {error}"
-            )
+            console.print(f"[red]Error:[/red] {error}")
 
             return
 
@@ -351,41 +298,27 @@ def handle_config(args):
         )
 
         console.print(
-            "[green]"
-            "Default forecast days set to "
-            f"{args.forecast_days}."
-            "[/green]"
+            f"[green]Default forecast days set to {args.forecast_days}.[/green]"
         )
 
         return
 
     if args.config_command == "set-units":
-        metric = (
-            args.units == "metric"
-        )
+        metric = args.units == "metric"
 
-        set_metric(
-            metric
-        )
+        set_metric(metric)
 
         logger.info(
             "Default units updated: %s",
             args.units,
         )
 
-        console.print(
-            "[green]"
-            f"Default units set to "
-            f"{args.units}."
-            "[/green]"
-        )
+        console.print(f"[green]Default units set to {args.units}.[/green]")
 
         return
 
     if args.config_command == "show":
-        logger.info(
-            "Displaying configuration"
-        )
+        logger.info("Displaying configuration")
 
         display_configuration()
 
@@ -394,22 +327,13 @@ def handle_config(args):
     if args.config_command == "clear-cache":
         clear_cache()
 
-        logger.info(
-            "Weather cache cleared"
-        )
+        logger.info("Weather cache cleared")
 
-        console.print(
-            "[green]"
-            "Weather cache cleared."
-            "[/green]"
-        )
+        console.print("[green]Weather cache cleared.[/green]")
 
         return
 
-    console.print(
-        "Use 'weather config --help' "
-        "to see configuration commands."
-    )
+    console.print("Use 'weather config --help' to see configuration commands.")
 
 
 def resolve_preferences(args):
@@ -424,9 +348,7 @@ def resolve_preferences(args):
     config = load_config()
 
     if args.city:
-        city = " ".join(
-            args.city
-        )
+        city = " ".join(args.city)
     else:
         city = config["default_city"]
 
@@ -457,39 +379,23 @@ def run_weather(args):
     Perform the weather lookup.
     """
 
-    city, metric, days = resolve_preferences(
-        args
-    )
+    city, metric, days = resolve_preferences(args)
 
     if city is None:
-        logger.info(
-            "Weather command used without a city"
-        )
+        logger.info("Weather command used without a city")
 
         console.print()
-        console.print(
-            "[yellow]"
-            "No city specified."
-            "[/yellow]"
-        )
+        console.print("[yellow]No city specified.[/yellow]")
 
         console.print()
-        console.print(
-            "Try:"
-        )
+        console.print("Try:")
 
-        console.print(
-            "  weather Atlanta"
-        )
+        console.print("  weather Atlanta")
 
         console.print()
-        console.print(
-            "Or set a default city:"
-        )
+        console.print("Or set a default city:")
 
-        console.print(
-            "  weather config set-city Atlanta"
-        )
+        console.print("  weather config set-city Atlanta")
 
         return
 
@@ -499,19 +405,12 @@ def run_weather(args):
             days,
         )
 
-        console.print(
-            "[red]Error:[/red] "
-            "--days must be between 1 and 7."
-        )
+        console.print("[red]Error:[/red] --days must be between 1 and 7.")
 
         return
 
     logger.info(
-        (
-            "Weather lookup started: "
-            "city=%s days=%s metric=%s "
-            "forecast=%s"
-        ),
+        ("Weather lookup started: city=%s days=%s metric=%s forecast=%s"),
         city,
         days,
         metric,
@@ -519,15 +418,10 @@ def run_weather(args):
     )
 
     console.print()
-    console.print(
-        f"Searching for "
-        f"[bold]{city}[/bold]..."
-    )
+    console.print(f"Searching for [bold]{city}[/bold]...")
 
     try:
-        locations = search_locations(
-            city
-        )
+        locations = search_locations(city)
 
         if not locations:
             logger.info(
@@ -536,16 +430,9 @@ def run_weather(args):
             )
 
             console.print()
-            console.print(
-                f"[red]"
-                f"Could not find '{city}'."
-                f"[/red]"
-            )
+            console.print(f"[red]Could not find '{city}'.[/red]")
 
-            console.print(
-                "Try including a state, "
-                "province, or country."
-            )
+            console.print("Try including a state, province, or country.")
 
             return
 
@@ -554,14 +441,10 @@ def run_weather(args):
             len(locations),
         )
 
-        location = choose_location(
-            locations
-        )
+        location = choose_location(locations)
 
         if location is None:
-            console.print(
-                "Search cancelled."
-            )
+            console.print("Search cancelled.")
 
             return
 
@@ -585,106 +468,61 @@ def run_weather(args):
             )
 
         logger.info(
-            (
-                "Weather lookup completed: "
-                "city=%s state=%s country=%s"
-            ),
+            ("Weather lookup completed: city=%s state=%s country=%s"),
             location["name"],
             location["state"],
             location["country"],
         )
 
     except requests.exceptions.Timeout:
-        logger.exception(
-            "Weather request timed out"
-        )
+        logger.exception("Weather request timed out")
 
         console.print()
-        console.print(
-            "[red]Error:[/red] "
-            "Weather service request timed out."
-        )
+        console.print("[red]Error:[/red] Weather service request timed out.")
 
     except requests.exceptions.ConnectionError:
-        logger.exception(
-            "Weather service connection failed"
-        )
+        logger.exception("Weather service connection failed")
 
         console.print()
-        console.print(
-            "[red]Error:[/red] "
-            "Unable to connect to the "
-            "weather service."
-        )
+        console.print("[red]Error:[/red] Unable to connect to the weather service.")
 
-        console.print(
-            "Check your internet connection."
-        )
+        console.print("Check your internet connection.")
 
     except requests.exceptions.HTTPError as error:
-        logger.exception(
-            "Weather service HTTP error"
-        )
+        logger.exception("Weather service HTTP error")
 
         console.print()
-        console.print(
-            "[red]HTTP error:[/red] "
-            f"{error}"
-        )
+        console.print(f"[red]HTTP error:[/red] {error}")
 
     except requests.exceptions.RequestException as error:
-        logger.exception(
-            "Weather service request failed"
-        )
+        logger.exception("Weather service request failed")
 
         console.print()
-        console.print(
-            "[red]Request error:[/red] "
-            f"{error}"
-        )
+        console.print(f"[red]Request error:[/red] {error}")
 
     except KeyError as error:
-        logger.exception(
-            "Required weather data field missing"
-        )
+        logger.exception("Required weather data field missing")
 
         console.print()
         console.print(
-            "[red]Data error:[/red] "
-            "The weather service returned "
-            "unexpected data."
+            "[red]Data error:[/red] The weather service returned unexpected data."
         )
 
-        console.print(
-            f"Missing field: {error}"
-        )
+        console.print(f"Missing field: {error}")
 
     except ValueError as error:
-        logger.exception(
-            "Weather data processing failed"
-        )
+        logger.exception("Weather data processing failed")
 
         console.print()
-        console.print(
-            "[red]Data error:[/red] "
-            f"{error}"
-        )
+        console.print(f"[red]Data error:[/red] {error}")
 
     except Exception:
-        logger.exception(
-            "Unexpected Weather CLI error"
-        )
+        logger.exception("Unexpected Weather CLI error")
 
         console.print()
-        console.print(
-            "[red]Unexpected error:[/red] "
-            "Weather CLI encountered a problem."
-        )
+        console.print("[red]Unexpected error:[/red] Weather CLI encountered a problem.")
 
-        console.print(
-            "Check the application log "
-            "for additional details."
-        )
+        console.print("Check the application log for additional details.")
 
 
 def main():
@@ -694,28 +532,20 @@ def main():
 
     configure_logging()
 
-    logger.info(
-        "Weather CLI started"
-    )
+    logger.info("Weather CLI started")
 
     args = parse_arguments()
 
     try:
         if args.command == "config":
-            handle_config(
-                args
-            )
+            handle_config(args)
 
             return
 
-        run_weather(
-            args
-        )
+        run_weather(args)
 
     finally:
-        logger.info(
-            "Weather CLI finished"
-        )
+        logger.info("Weather CLI finished")
 
 
 if __name__ == "__main__":

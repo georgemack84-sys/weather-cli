@@ -2,17 +2,13 @@ import json
 import time
 from pathlib import Path
 
-
 CACHE_DIRECTORY = Path.home() / ".weather-cli" / "cache"
 DEFAULT_TTL_SECONDS = 600
 
 
 def _cache_file(key):
     safe_key = (
-        key.replace(" ", "_")
-        .replace("/", "_")
-        .replace("\\", "_")
-        .replace(":", "_")
+        key.replace(" ", "_").replace("/", "_").replace("\\", "_").replace(":", "_")
     )
 
     return CACHE_DIRECTORY / f"{safe_key}.json"

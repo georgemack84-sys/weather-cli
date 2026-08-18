@@ -100,9 +100,7 @@ def test_search_locations_not_found(mock_get):
 def test_search_locations_uses_requested_count(mock_get):
     mock_response = Mock()
 
-    mock_response.json.return_value = {
-        "results": []
-    }
+    mock_response.json.return_value = {"results": []}
 
     mock_get.return_value = mock_response
 
@@ -126,9 +124,7 @@ def test_build_weather_cache_key_imperial():
         False,
     )
 
-    assert key == (
-        "weather_33.749_-84.388_3_imperial"
-    )
+    assert key == ("weather_33.749_-84.388_3_imperial")
 
 
 def test_build_weather_cache_key_metric():
@@ -139,9 +135,7 @@ def test_build_weather_cache_key_metric():
         True,
     )
 
-    assert key == (
-        "weather_51.5072_-0.1276_5_metric"
-    )
+    assert key == ("weather_51.5072_-0.1276_5_metric")
 
 
 @patch("weather_cli.api.save_cache")
@@ -191,9 +185,7 @@ def test_get_weather_imperial(
 
     mock_response.raise_for_status.assert_called_once()
 
-    mock_load_cache.assert_called_once_with(
-        "weather_33.749_-84.388_3_imperial"
-    )
+    mock_load_cache.assert_called_once_with("weather_33.749_-84.388_3_imperial")
 
     mock_save_cache.assert_called_once_with(
         "weather_33.749_-84.388_3_imperial",
@@ -245,9 +237,7 @@ def test_get_weather_metric(
     assert params["forecast_days"] == 5
     assert params["timezone"] == "auto"
 
-    mock_load_cache.assert_called_once_with(
-        "weather_51.5072_-0.1276_5_metric"
-    )
+    mock_load_cache.assert_called_once_with("weather_51.5072_-0.1276_5_metric")
 
     mock_save_cache.assert_called_once_with(
         "weather_51.5072_-0.1276_5_metric",

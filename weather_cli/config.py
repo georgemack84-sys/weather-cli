@@ -1,7 +1,6 @@
 import json
 from pathlib import Path
 
-
 APP_DIRECTORY = Path.home() / ".weather-cli"
 CONFIG_FILE = APP_DIRECTORY / "config.json"
 

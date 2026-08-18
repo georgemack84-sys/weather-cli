@@ -44,11 +44,7 @@ def load_config():
     config = DEFAULT_CONFIG.copy()
 
     config.update(
-        {
-            key: value
-            for key, value in saved_config.items()
-            if key in DEFAULT_CONFIG
-        }
+        {key: value for key, value in saved_config.items() if key in DEFAULT_CONFIG}
     )
 
     return config
@@ -91,15 +87,9 @@ def set_default_city(city):
     else:
         city = city.strip()
 
-        config["default_city"] = (
-            city
-            if city
-            else None
-        )
+        config["default_city"] = city if city else None
 
-    save_config(
-        config
-    )
+    save_config(config)
 
 
 def set_metric(metric):
@@ -114,9 +104,7 @@ def set_metric(metric):
 
     config["metric"] = bool(metric)
 
-    save_config(
-        config
-    )
+    save_config(config)
 
 
 def set_forecast_days(days):
@@ -127,19 +115,13 @@ def set_forecast_days(days):
     """
 
     if not isinstance(days, int):
-        raise TypeError(
-            "Forecast days must be an integer."
-        )
+        raise TypeError("Forecast days must be an integer.")
 
     if not 1 <= days <= 7:
-        raise ValueError(
-            "Forecast days must be between 1 and 7."
-        )
+        raise ValueError("Forecast days must be between 1 and 7.")
 
     config = load_config()
 
     config["forecast_days"] = days
 
-    save_config(
-        config
-    )
+    save_config(config)

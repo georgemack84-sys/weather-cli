@@ -228,9 +228,7 @@ def test_set_default_city(
         config_file,
     )
 
-    config.set_default_city(
-        "Atlanta"
-    )
+    config.set_default_city("Atlanta")
 
     loaded = config.load_config()
 
@@ -256,9 +254,7 @@ def test_set_default_city_strips_whitespace(
         config_file,
     )
 
-    config.set_default_city(
-        "  New York  "
-    )
+    config.set_default_city("  New York  ")
 
     loaded = config.load_config()
 
@@ -284,13 +280,9 @@ def test_empty_city_clears_default(
         config_file,
     )
 
-    config.set_default_city(
-        "Atlanta"
-    )
+    config.set_default_city("Atlanta")
 
-    config.set_default_city(
-        "   "
-    )
+    config.set_default_city("   ")
 
     loaded = config.load_config()
 
@@ -316,13 +308,9 @@ def test_none_city_clears_default(
         config_file,
     )
 
-    config.set_default_city(
-        "Atlanta"
-    )
+    config.set_default_city("Atlanta")
 
-    config.set_default_city(
-        None
-    )
+    config.set_default_city(None)
 
     loaded = config.load_config()
 
@@ -348,9 +336,7 @@ def test_set_metric_true(
         config_file,
     )
 
-    config.set_metric(
-        True
-    )
+    config.set_metric(True)
 
     loaded = config.load_config()
 
@@ -376,9 +362,7 @@ def test_set_metric_false(
         config_file,
     )
 
-    config.set_metric(
-        False
-    )
+    config.set_metric(False)
 
     loaded = config.load_config()
 
@@ -404,9 +388,7 @@ def test_set_forecast_days(
         config_file,
     )
 
-    config.set_forecast_days(
-        5
-    )
+    config.set_forecast_days(5)
 
     loaded = config.load_config()
 
@@ -432,9 +414,7 @@ def test_set_forecast_days_minimum(
         config_file,
     )
 
-    config.set_forecast_days(
-        1
-    )
+    config.set_forecast_days(1)
 
     loaded = config.load_config()
 
@@ -460,9 +440,7 @@ def test_set_forecast_days_maximum(
         config_file,
     )
 
-    config.set_forecast_days(
-        7
-    )
+    config.set_forecast_days(7)
 
     loaded = config.load_config()
 
@@ -483,9 +461,7 @@ def test_set_forecast_days_rejects_out_of_range(days):
         ValueError,
         match="between 1 and 7",
     ):
-        config.set_forecast_days(
-            days
-        )
+        config.set_forecast_days(days)
 
 
 def test_set_forecast_days_rejects_non_integer():
@@ -493,6 +469,4 @@ def test_set_forecast_days_rejects_non_integer():
         TypeError,
         match="must be an integer",
     ):
-        config.set_forecast_days(
-            "5"
-        )
+        config.set_forecast_days("5")

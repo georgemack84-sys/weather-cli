@@ -88,10 +88,7 @@ branch = true
 show_missing = true
 skip_covered = false
 precision = 1
-
-# Keep this at 40 until the current codebase is green in GitHub CI.
-# Once CI is fully green, raise this to 100.
-fail_under = 40
+fail_under = 100
 
 exclude_lines = [
     "pragma: no cover",

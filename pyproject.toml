@@ -12,7 +12,7 @@ requires-python = ">=3.10"
 
 dependencies = [
     "requests>=2.31.0",
-    "rich>=13.0"
+    "rich>=13.0",
 ]
 
 
@@ -20,7 +20,7 @@ dependencies = [
 dev = [
     "pytest>=8.0",
     "pytest-cov>=5.0",
-    "ruff>=0.6"
+    "ruff==0.12.11",
 ]
 
 
@@ -35,11 +35,11 @@ include = ["weather_cli*"]
 
 [tool.pytest.ini_options]
 testpaths = [
-    "tests"
+    "tests",
 ]
 
 addopts = [
-    "-ra"
+    "-ra",
 ]
 
 
@@ -55,7 +55,7 @@ exclude = [
     ".ruff_cache",
     "__pycache__",
     "build",
-    "dist"
+    "dist",
 ]
 
 
@@ -64,7 +64,7 @@ select = [
     "E",
     "F",
     "I",
-    "UP"
+    "UP",
 ]
 
 ignore = []
@@ -78,7 +78,7 @@ line-ending = "auto"
 
 [tool.coverage.run]
 source = [
-    "weather_cli"
+    "weather_cli",
 ]
 
 branch = true
@@ -88,9 +88,12 @@ branch = true
 show_missing = true
 skip_covered = false
 precision = 1
+
+# Keep this at 40 until the current codebase is green in GitHub CI.
+# Once CI is fully green, raise this to 100.
 fail_under = 40
 
 exclude_lines = [
     "pragma: no cover",
-    "if __name__ == .__main__.:"
+    "if __name__ == .__main__.:",
 ]

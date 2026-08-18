@@ -25,9 +25,7 @@ def test_configure_logging_creates_log_directory(
 
     assert not log_directory.exists()
 
-    with patch(
-        "weather_cli.logging_config.logging.basicConfig"
-    ) as mock_basic_config:
+    with patch("weather_cli.logging_config.logging.basicConfig") as mock_basic_config:
         logging_config.configure_logging()
 
     assert log_directory.exists()
@@ -54,9 +52,7 @@ def test_configure_logging_uses_log_file(
         log_file,
     )
 
-    with patch(
-        "weather_cli.logging_config.logging.basicConfig"
-    ) as mock_basic_config:
+    with patch("weather_cli.logging_config.logging.basicConfig") as mock_basic_config:
         logging_config.configure_logging()
 
     _, kwargs = mock_basic_config.call_args
@@ -83,9 +79,7 @@ def test_configure_logging_sets_expected_level(
         log_file,
     )
 
-    with patch(
-        "weather_cli.logging_config.logging.basicConfig"
-    ) as mock_basic_config:
+    with patch("weather_cli.logging_config.logging.basicConfig") as mock_basic_config:
         logging_config.configure_logging()
 
     _, kwargs = mock_basic_config.call_args
@@ -112,9 +106,7 @@ def test_configure_logging_sets_format(
         log_file,
     )
 
-    with patch(
-        "weather_cli.logging_config.logging.basicConfig"
-    ) as mock_basic_config:
+    with patch("weather_cli.logging_config.logging.basicConfig") as mock_basic_config:
         logging_config.configure_logging()
 
     _, kwargs = mock_basic_config.call_args
@@ -147,9 +139,7 @@ def test_configure_logging_directory_creation_is_idempotent(
         log_file,
     )
 
-    with patch(
-        "weather_cli.logging_config.logging.basicConfig"
-    ) as mock_basic_config:
+    with patch("weather_cli.logging_config.logging.basicConfig") as mock_basic_config:
         logging_config.configure_logging()
 
     assert log_directory.exists()

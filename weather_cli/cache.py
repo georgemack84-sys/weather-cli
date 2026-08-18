@@ -2,7 +2,6 @@ import json
 import time
 from pathlib import Path
 
-
 CACHE_DIRECTORY = Path.home() / ".weather-cli" / "cache"
 DEFAULT_TTL_SECONDS = 600
 

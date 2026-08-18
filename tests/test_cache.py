@@ -37,9 +37,7 @@ def test_cache_file_sanitizes_unsafe_characters(
         monkeypatch,
     )
 
-    path = cache._cache_file(
-        'New York/GA\\test:weather?*"< >|'
-    )
+    path = cache._cache_file('New York/GA\\test:weather?*"< >|')
 
     assert path.parent == cache_directory
     assert path.suffix == ".json"
@@ -110,9 +108,7 @@ def test_save_cache_creates_directory(
     )
 
     assert cache_directory.exists()
-    assert (
-        cache_directory / "atlanta.json"
-    ).exists()
+    assert (cache_directory / "atlanta.json").exists()
 
 
 def test_save_cache_writes_timestamp_and_data(
@@ -137,10 +133,7 @@ def test_save_cache_writes_timestamp_and_data(
             data,
         )
 
-    path = (
-        cache_directory
-        / "atlanta.json"
-    )
+    path = cache_directory / "atlanta.json"
 
     payload = json.loads(
         path.read_text(
@@ -163,9 +156,7 @@ def test_missing_cache_returns_none(
         monkeypatch,
     )
 
-    result = cache.load_cache(
-        "missing"
-    )
+    result = cache.load_cache("missing")
 
     assert result is None
 
@@ -183,10 +174,7 @@ def test_expired_cache_returns_none(
         parents=True,
     )
 
-    path = (
-        cache_directory
-        / "atlanta.json"
-    )
+    path = cache_directory / "atlanta.json"
 
     path.write_text(
         json.dumps(
@@ -226,10 +214,7 @@ def test_expired_cache_unlink_failure_returns_none(
         parents=True,
     )
 
-    path = (
-        cache_directory
-        / "atlanta.json"
-    )
+    path = cache_directory / "atlanta.json"
 
     path.write_text(
         json.dumps(
@@ -251,9 +236,7 @@ def test_expired_cache_unlink_failure_returns_none(
         patch.object(
             type(path),
             "unlink",
-            side_effect=OSError(
-                "cannot delete"
-            ),
+            side_effect=OSError("cannot delete"),
         ),
     ):
         result = cache.load_cache(
@@ -277,20 +260,14 @@ def test_invalid_json_returns_none(
         parents=True,
     )
 
-    path = (
-        cache_directory
-        / "atlanta.json"
-    )
+    path = cache_directory / "atlanta.json"
 
     path.write_text(
         "{ invalid json",
         encoding="utf-8",
     )
 
-    assert (
-        cache.load_cache("atlanta")
-        is None
-    )
+    assert cache.load_cache("atlanta") is None
 
 
 def test_non_dictionary_payload_returns_none(
@@ -306,10 +283,7 @@ def test_non_dictionary_payload_returns_none(
         parents=True,
     )
 
-    path = (
-        cache_directory
-        / "atlanta.json"
-    )
+    path = cache_directory / "atlanta.json"
 
     path.write_text(
         json.dumps(
@@ -321,10 +295,7 @@ def test_non_dictionary_payload_returns_none(
         encoding="utf-8",
     )
 
-    assert (
-        cache.load_cache("atlanta")
-        is None
-    )
+    assert cache.load_cache("atlanta") is None
 
 
 def test_missing_timestamp_returns_none(
@@ -340,10 +311,7 @@ def test_missing_timestamp_returns_none(
         parents=True,
     )
 
-    path = (
-        cache_directory
-        / "atlanta.json"
-    )
+    path = cache_directory / "atlanta.json"
 
     path.write_text(
         json.dumps(
@@ -356,10 +324,7 @@ def test_missing_timestamp_returns_none(
         encoding="utf-8",
     )
 
-    assert (
-        cache.load_cache("atlanta")
-        is None
-    )
+    assert cache.load_cache("atlanta") is None
 
 
 def test_missing_data_returns_none(
@@ -375,10 +340,7 @@ def test_missing_data_returns_none(
         parents=True,
     )
 
-    path = (
-        cache_directory
-        / "atlanta.json"
-    )
+    path = cache_directory / "atlanta.json"
 
     path.write_text(
         json.dumps(
@@ -389,10 +351,7 @@ def test_missing_data_returns_none(
         encoding="utf-8",
     )
 
-    assert (
-        cache.load_cache("atlanta")
-        is None
-    )
+    assert cache.load_cache("atlanta") is None
 
 
 def test_invalid_timestamp_returns_none(
@@ -408,10 +367,7 @@ def test_invalid_timestamp_returns_none(
         parents=True,
     )
 
-    path = (
-        cache_directory
-        / "atlanta.json"
-    )
+    path = cache_directory / "atlanta.json"
 
     path.write_text(
         json.dumps(
@@ -425,10 +381,7 @@ def test_invalid_timestamp_returns_none(
         encoding="utf-8",
     )
 
-    assert (
-        cache.load_cache("atlanta")
-        is None
-    )
+    assert cache.load_cache("atlanta") is None
 
 
 def test_clear_cache(
@@ -444,15 +397,9 @@ def test_clear_cache(
         parents=True,
     )
 
-    first = (
-        cache_directory
-        / "first.json"
-    )
+    first = cache_directory / "first.json"
 
-    second = (
-        cache_directory
-        / "second.json"
-    )
+    second = cache_directory / "second.json"
 
     first.write_text(
         "{}",
@@ -499,15 +446,9 @@ def test_clear_cache_ignores_non_json_files(
         parents=True,
     )
 
-    json_file = (
-        cache_directory
-        / "weather.json"
-    )
+    json_file = cache_directory / "weather.json"
 
-    text_file = (
-        cache_directory
-        / "keep.txt"
-    )
+    text_file = cache_directory / "keep.txt"
 
     json_file.write_text(
         "{}",
@@ -538,10 +479,7 @@ def test_clear_cache_ignores_unlink_failure(
         parents=True,
     )
 
-    path = (
-        cache_directory
-        / "weather.json"
-    )
+    path = cache_directory / "weather.json"
 
     path.write_text(
         "{}",
@@ -551,8 +489,6 @@ def test_clear_cache_ignores_unlink_failure(
     with patch.object(
         type(path),
         "unlink",
-        side_effect=OSError(
-            "cannot delete"
-        ),
+        side_effect=OSError("cannot delete"),
     ):
         cache.clear_cache()

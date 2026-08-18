@@ -95,9 +95,7 @@ def test_weather_parser_version(capsys):
 
     output = capsys.readouterr().out
 
-    assert output.strip() == (
-        f"weather {cli.__version__}"
-    )
+    assert output.strip() == (f"weather {cli.__version__}")
 
 
 def test_config_set_city_parser():
@@ -184,9 +182,7 @@ def test_config_parser_version(capsys):
 
     output = capsys.readouterr().out
 
-    assert output.strip() == (
-        f"weather {cli.__version__}"
-    )
+    assert output.strip() == (f"weather {cli.__version__}")
 
 
 @patch.object(
@@ -240,9 +236,7 @@ def test_parse_arguments_version(capsys):
 
     output = capsys.readouterr().out
 
-    assert output.strip() == (
-        f"weather {cli.__version__}"
-    )
+    assert output.strip() == (f"weather {cli.__version__}")
 
 
 @patch.object(
@@ -262,9 +256,7 @@ def test_parse_arguments_config_version(capsys):
 
     output = capsys.readouterr().out
 
-    assert output.strip() == (
-        f"weather {cli.__version__}"
-    )
+    assert output.strip() == (f"weather {cli.__version__}")
 
 
 @patch("weather_cli.cli.load_config")
@@ -284,9 +276,7 @@ def test_resolve_preferences_uses_config(
         days=None,
     )
 
-    city, metric, days = (
-        cli.resolve_preferences(args)
-    )
+    city, metric, days = cli.resolve_preferences(args)
 
     assert city == "Atlanta"
     assert metric is False
@@ -310,9 +300,7 @@ def test_resolve_preferences_cli_overrides_config(
         days=5,
     )
 
-    city, metric, days = (
-        cli.resolve_preferences(args)
-    )
+    city, metric, days = cli.resolve_preferences(args)
 
     assert city == "London"
     assert metric is True
@@ -336,9 +324,7 @@ def test_resolve_preferences_imperial_override(
         days=None,
     )
 
-    city, metric, days = (
-        cli.resolve_preferences(args)
-    )
+    city, metric, days = cli.resolve_preferences(args)
 
     assert city == "London"
     assert metric is False
@@ -357,12 +343,7 @@ def test_choose_location_single_result():
         "timezone": "America/New_York",
     }
 
-    assert (
-        cli.choose_location(
-            [location]
-        )
-        == location
-    )
+    assert cli.choose_location([location]) == location
 
 
 @patch.object(
@@ -388,9 +369,7 @@ def test_choose_location_multiple_results(
         },
     ]
 
-    selected = cli.choose_location(
-        locations
-    )
+    selected = cli.choose_location(locations)
 
     assert selected == locations[1]
 
@@ -418,9 +397,7 @@ def test_choose_location_cancel(
         },
     ]
 
-    result = cli.choose_location(
-        locations
-    )
+    result = cli.choose_location(locations)
 
     assert result is None
 
@@ -452,9 +429,7 @@ def test_choose_location_retries_invalid_input(
         },
     ]
 
-    selected = cli.choose_location(
-        locations
-    )
+    selected = cli.choose_location(locations)
 
     assert selected == locations[0]
     assert mock_input.call_count == 3
@@ -473,14 +448,9 @@ def test_display_configuration(
 
     cli.display_configuration()
 
-    output = (
-        capsys.readouterr().out
-    )
+    output = capsys.readouterr().out
 
-    assert (
-        "Weather CLI Configuration"
-        in output
-    )
+    assert "Weather CLI Configuration" in output
     assert "Atlanta" in output
     assert "imperial" in output
     assert "5" in output
@@ -499,17 +469,13 @@ def test_display_configuration_without_default_city(
 
     cli.display_configuration()
 
-    output = (
-        capsys.readouterr().out
-    )
+    output = capsys.readouterr().out
 
     assert "Not configured" in output
     assert "metric" in output
 
 
-@patch(
-    "weather_cli.cli.set_default_city"
-)
+@patch("weather_cli.cli.set_default_city")
 def test_handle_config_set_city(
     mock_set_default_city,
 ):
@@ -523,14 +489,10 @@ def test_handle_config_set_city(
 
     cli.handle_config(args)
 
-    mock_set_default_city.assert_called_once_with(
-        "New York"
-    )
+    mock_set_default_city.assert_called_once_with("New York")
 
 
-@patch(
-    "weather_cli.cli.set_forecast_days"
-)
+@patch("weather_cli.cli.set_forecast_days")
 def test_handle_config_set_days(
     mock_set_forecast_days,
 ):
@@ -541,16 +503,12 @@ def test_handle_config_set_days(
 
     cli.handle_config(args)
 
-    mock_set_forecast_days.assert_called_once_with(
-        5
-    )
+    mock_set_forecast_days.assert_called_once_with(5)
 
 
 @patch(
     "weather_cli.cli.set_forecast_days",
-    side_effect=ValueError(
-        "Forecast days must be between 1 and 7."
-    ),
+    side_effect=ValueError("Forecast days must be between 1 and 7."),
 )
 def test_handle_config_invalid_days(
     mock_set_forecast_days,
@@ -562,14 +520,10 @@ def test_handle_config_invalid_days(
 
     cli.handle_config(args)
 
-    mock_set_forecast_days.assert_called_once_with(
-        10
-    )
+    mock_set_forecast_days.assert_called_once_with(10)
 
 
-@patch(
-    "weather_cli.cli.set_metric"
-)
+@patch("weather_cli.cli.set_metric")
 def test_handle_config_metric(
     mock_set_metric,
 ):
@@ -580,14 +534,10 @@ def test_handle_config_metric(
 
     cli.handle_config(args)
 
-    mock_set_metric.assert_called_once_with(
-        True
-    )
+    mock_set_metric.assert_called_once_with(True)
 
 
-@patch(
-    "weather_cli.cli.set_metric"
-)
+@patch("weather_cli.cli.set_metric")
 def test_handle_config_imperial(
     mock_set_metric,
 ):
@@ -598,14 +548,10 @@ def test_handle_config_imperial(
 
     cli.handle_config(args)
 
-    mock_set_metric.assert_called_once_with(
-        False
-    )
+    mock_set_metric.assert_called_once_with(False)
 
 
-@patch(
-    "weather_cli.cli.display_configuration"
-)
+@patch("weather_cli.cli.display_configuration")
 def test_handle_config_show(
     mock_display_configuration,
 ):
@@ -618,9 +564,7 @@ def test_handle_config_show(
     mock_display_configuration.assert_called_once()
 
 
-@patch(
-    "weather_cli.cli.clear_cache"
-)
+@patch("weather_cli.cli.clear_cache")
 def test_handle_config_clear_cache(
     mock_clear_cache,
 ):
@@ -642,19 +586,12 @@ def test_handle_config_without_subcommand(
 
     cli.handle_config(args)
 
-    output = (
-        capsys.readouterr().out
-    )
+    output = capsys.readouterr().out
 
-    assert (
-        "weather config --help"
-        in output
-    )
+    assert "weather config --help" in output
 
 
-@patch(
-    "weather_cli.cli.resolve_preferences"
-)
+@patch("weather_cli.cli.resolve_preferences")
 def test_run_weather_without_city(
     mock_resolve_preferences,
     capsys,
@@ -671,19 +608,12 @@ def test_run_weather_without_city(
 
     cli.run_weather(args)
 
-    output = (
-        capsys.readouterr().out
-    )
+    output = capsys.readouterr().out
 
-    assert (
-        "No city specified"
-        in output
-    )
+    assert "No city specified" in output
 
 
-@patch(
-    "weather_cli.cli.resolve_preferences"
-)
+@patch("weather_cli.cli.resolve_preferences")
 def test_run_weather_invalid_days(
     mock_resolve_preferences,
     capsys,
@@ -700,23 +630,16 @@ def test_run_weather_invalid_days(
 
     cli.run_weather(args)
 
-    output = (
-        capsys.readouterr().out
-    )
+    output = capsys.readouterr().out
 
-    assert (
-        "between 1 and 7"
-        in output
-    )
+    assert "between 1 and 7" in output
 
 
 @patch(
     "weather_cli.cli.search_locations",
     return_value=[],
 )
-@patch(
-    "weather_cli.cli.resolve_preferences"
-)
+@patch("weather_cli.cli.resolve_preferences")
 def test_run_weather_no_locations(
     mock_resolve_preferences,
     mock_search_locations,
@@ -734,27 +657,19 @@ def test_run_weather_no_locations(
 
     cli.run_weather(args)
 
-    output = (
-        capsys.readouterr().out
-    )
+    output = capsys.readouterr().out
 
     assert "Could not find" in output
 
-    mock_search_locations.assert_called_once_with(
-        "NotARealCity"
-    )
+    mock_search_locations.assert_called_once_with("NotARealCity")
 
 
 @patch(
     "weather_cli.cli.choose_location",
     return_value=None,
 )
-@patch(
-    "weather_cli.cli.search_locations"
-)
-@patch(
-    "weather_cli.cli.resolve_preferences"
-)
+@patch("weather_cli.cli.search_locations")
+@patch("weather_cli.cli.resolve_preferences")
 def test_run_weather_cancelled(
     mock_resolve_preferences,
     mock_search_locations,
@@ -784,30 +699,18 @@ def test_run_weather_cancelled(
 
     cli.run_weather(args)
 
-    output = (
-        capsys.readouterr().out
-    )
+    output = capsys.readouterr().out
 
     assert "Search cancelled" in output
 
     mock_choose_location.assert_called_once()
 
 
-@patch(
-    "weather_cli.cli.display_current_weather"
-)
-@patch(
-    "weather_cli.cli.get_weather"
-)
-@patch(
-    "weather_cli.cli.choose_location"
-)
-@patch(
-    "weather_cli.cli.search_locations"
-)
-@patch(
-    "weather_cli.cli.resolve_preferences"
-)
+@patch("weather_cli.cli.display_current_weather")
+@patch("weather_cli.cli.get_weather")
+@patch("weather_cli.cli.choose_location")
+@patch("weather_cli.cli.search_locations")
+@patch("weather_cli.cli.resolve_preferences")
 def test_run_weather_success_current_only(
     mock_resolve_preferences,
     mock_search_locations,
@@ -836,17 +739,11 @@ def test_run_weather_success_current_only(
         3,
     )
 
-    mock_search_locations.return_value = [
-        location
-    ]
+    mock_search_locations.return_value = [location]
 
-    mock_choose_location.return_value = (
-        location
-    )
+    mock_choose_location.return_value = location
 
-    mock_get_weather.return_value = (
-        weather
-    )
+    mock_get_weather.return_value = weather
 
     args = Namespace(
         forecast=False,
@@ -868,24 +765,12 @@ def test_run_weather_success_current_only(
     )
 
 
-@patch(
-    "weather_cli.cli.display_forecast"
-)
-@patch(
-    "weather_cli.cli.display_current_weather"
-)
-@patch(
-    "weather_cli.cli.get_weather"
-)
-@patch(
-    "weather_cli.cli.choose_location"
-)
-@patch(
-    "weather_cli.cli.search_locations"
-)
-@patch(
-    "weather_cli.cli.resolve_preferences"
-)
+@patch("weather_cli.cli.display_forecast")
+@patch("weather_cli.cli.display_current_weather")
+@patch("weather_cli.cli.get_weather")
+@patch("weather_cli.cli.choose_location")
+@patch("weather_cli.cli.search_locations")
+@patch("weather_cli.cli.resolve_preferences")
 def test_run_weather_success_with_forecast(
     mock_resolve_preferences,
     mock_search_locations,
@@ -914,17 +799,11 @@ def test_run_weather_success_with_forecast(
         5,
     )
 
-    mock_search_locations.return_value = [
-        location
-    ]
+    mock_search_locations.return_value = [location]
 
-    mock_choose_location.return_value = (
-        location
-    )
+    mock_choose_location.return_value = location
 
-    mock_get_weather.return_value = (
-        weather
-    )
+    mock_get_weather.return_value = weather
 
     args = Namespace(
         forecast=True,
@@ -948,9 +827,7 @@ def test_run_weather_success_with_forecast(
     "weather_cli.cli.search_locations",
     side_effect=requests.exceptions.Timeout,
 )
-@patch(
-    "weather_cli.cli.resolve_preferences"
-)
+@patch("weather_cli.cli.resolve_preferences")
 def test_run_weather_timeout(
     mock_resolve_preferences,
     mock_search_locations,
@@ -968,22 +845,16 @@ def test_run_weather_timeout(
 
     cli.run_weather(args)
 
-    output = (
-        capsys.readouterr().out
-    )
+    output = capsys.readouterr().out
 
     assert "timed out" in output
 
 
 @patch(
     "weather_cli.cli.search_locations",
-    side_effect=(
-        requests.exceptions.ConnectionError
-    ),
+    side_effect=(requests.exceptions.ConnectionError),
 )
-@patch(
-    "weather_cli.cli.resolve_preferences"
-)
+@patch("weather_cli.cli.resolve_preferences")
 def test_run_weather_connection_error(
     mock_resolve_preferences,
     mock_search_locations,
@@ -1001,22 +872,16 @@ def test_run_weather_connection_error(
 
     cli.run_weather(args)
 
-    output = (
-        capsys.readouterr().out
-    )
+    output = capsys.readouterr().out
 
     assert "Unable to connect" in output
 
 
 @patch(
     "weather_cli.cli.search_locations",
-    side_effect=requests.exceptions.HTTPError(
-        "500"
-    ),
+    side_effect=requests.exceptions.HTTPError("500"),
 )
-@patch(
-    "weather_cli.cli.resolve_preferences"
-)
+@patch("weather_cli.cli.resolve_preferences")
 def test_run_weather_http_error(
     mock_resolve_preferences,
     mock_search_locations,
@@ -1034,24 +899,16 @@ def test_run_weather_http_error(
 
     cli.run_weather(args)
 
-    output = (
-        capsys.readouterr().out
-    )
+    output = capsys.readouterr().out
 
     assert "HTTP error" in output
 
 
 @patch(
     "weather_cli.cli.search_locations",
-    side_effect=(
-        requests.exceptions.RequestException(
-            "request failed"
-        )
-    ),
+    side_effect=(requests.exceptions.RequestException("request failed")),
 )
-@patch(
-    "weather_cli.cli.resolve_preferences"
-)
+@patch("weather_cli.cli.resolve_preferences")
 def test_run_weather_request_error(
     mock_resolve_preferences,
     mock_search_locations,
@@ -1069,9 +926,7 @@ def test_run_weather_request_error(
 
     cli.run_weather(args)
 
-    output = (
-        capsys.readouterr().out
-    )
+    output = capsys.readouterr().out
 
     assert "Request error" in output
 
@@ -1080,9 +935,7 @@ def test_run_weather_request_error(
     "weather_cli.cli.search_locations",
     side_effect=KeyError("missing"),
 )
-@patch(
-    "weather_cli.cli.resolve_preferences"
-)
+@patch("weather_cli.cli.resolve_preferences")
 def test_run_weather_key_error(
     mock_resolve_preferences,
     mock_search_locations,
@@ -1100,22 +953,16 @@ def test_run_weather_key_error(
 
     cli.run_weather(args)
 
-    output = (
-        capsys.readouterr().out
-    )
+    output = capsys.readouterr().out
 
     assert "unexpected data" in output
 
 
 @patch(
     "weather_cli.cli.search_locations",
-    side_effect=ValueError(
-        "bad data"
-    ),
+    side_effect=ValueError("bad data"),
 )
-@patch(
-    "weather_cli.cli.resolve_preferences"
-)
+@patch("weather_cli.cli.resolve_preferences")
 def test_run_weather_value_error(
     mock_resolve_preferences,
     mock_search_locations,
@@ -1133,22 +980,16 @@ def test_run_weather_value_error(
 
     cli.run_weather(args)
 
-    output = (
-        capsys.readouterr().out
-    )
+    output = capsys.readouterr().out
 
     assert "Data error" in output
 
 
 @patch(
     "weather_cli.cli.search_locations",
-    side_effect=RuntimeError(
-        "unexpected"
-    ),
+    side_effect=RuntimeError("unexpected"),
 )
-@patch(
-    "weather_cli.cli.resolve_preferences"
-)
+@patch("weather_cli.cli.resolve_preferences")
 def test_run_weather_unexpected_error(
     mock_resolve_preferences,
     mock_search_locations,
@@ -1166,22 +1007,14 @@ def test_run_weather_unexpected_error(
 
     cli.run_weather(args)
 
-    output = (
-        capsys.readouterr().out
-    )
+    output = capsys.readouterr().out
 
     assert "Unexpected error" in output
 
 
-@patch(
-    "weather_cli.cli.run_weather"
-)
-@patch(
-    "weather_cli.cli.parse_arguments"
-)
-@patch(
-    "weather_cli.cli.configure_logging"
-)
+@patch("weather_cli.cli.run_weather")
+@patch("weather_cli.cli.parse_arguments")
+@patch("weather_cli.cli.configure_logging")
 def test_main_weather(
     mock_configure_logging,
     mock_parse_arguments,
@@ -1191,28 +1024,18 @@ def test_main_weather(
         command="weather",
     )
 
-    mock_parse_arguments.return_value = (
-        args
-    )
+    mock_parse_arguments.return_value = args
 
     cli.main()
 
     mock_configure_logging.assert_called_once()
 
-    mock_run_weather.assert_called_once_with(
-        args
-    )
+    mock_run_weather.assert_called_once_with(args)
 
 
-@patch(
-    "weather_cli.cli.handle_config"
-)
-@patch(
-    "weather_cli.cli.parse_arguments"
-)
-@patch(
-    "weather_cli.cli.configure_logging"
-)
+@patch("weather_cli.cli.handle_config")
+@patch("weather_cli.cli.parse_arguments")
+@patch("weather_cli.cli.configure_logging")
 def test_main_config(
     mock_configure_logging,
     mock_parse_arguments,
@@ -1222,14 +1045,10 @@ def test_main_config(
         command="config",
     )
 
-    mock_parse_arguments.return_value = (
-        args
-    )
+    mock_parse_arguments.return_value = args
 
     cli.main()
 
     mock_configure_logging.assert_called_once()
 
-    mock_handle_config.assert_called_once_with(
-        args
-    )
+    mock_handle_config.assert_called_once_with(args)

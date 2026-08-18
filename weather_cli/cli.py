@@ -27,10 +27,7 @@ def build_weather_parser():
 
     parser = argparse.ArgumentParser(
         prog="weather",
-        description=(
-            "A command-line weather application "
-            "powered by Open-Meteo."
-        ),
+        description=("A command-line weather application powered by Open-Meteo."),
     )
 
     parser.add_argument(
@@ -156,9 +153,7 @@ def parse_arguments():
     if raw_args and raw_args[0] == "config":
         parser = build_config_parser()
 
-        args = parser.parse_args(
-            raw_args[1:]
-        )
+        args = parser.parse_args(raw_args[1:])
 
         args.command = "config"
 
@@ -166,9 +161,7 @@ def parse_arguments():
 
     parser = build_weather_parser()
 
-    args = parser.parse_args(
-        raw_args
-    )
+    args = parser.parse_args(raw_args)
 
     args.command = "weather"
 
@@ -224,26 +217,18 @@ def choose_location(locations):
     if len(locations) == 1:
         return locations[0]
 
-    table = Table(
-        title="Multiple locations found"
-    )
+    table = Table(title="Multiple locations found")
 
     table.add_column(
         "#",
         justify="right",
     )
 
-    table.add_column(
-        "City"
-    )
+    table.add_column("City")
 
-    table.add_column(
-        "State"
-    )
+    table.add_column("State")
 
-    table.add_column(
-        "Country"
-    )
+    table.add_column("Country")
 
     for index, location in enumerate(
         locations,
@@ -269,8 +254,7 @@ def choose_location(locations):
 
     while True:
         selection = console.input(
-            "[bold]Choose a location "
-            "(number or q to cancel): [/bold]"
+            "[bold]Choose a location (number or q to cancel): [/bold]"
         )
 
         selection = selection.strip()
@@ -281,18 +265,12 @@ def choose_location(locations):
         try:
             index = int(selection)
         except ValueError:
-            console.print(
-                "[red]Please enter a valid number "
-                "or q to cancel.[/red]"
-            )
+            console.print("[red]Please enter a valid number or q to cancel.[/red]")
 
             continue
 
         if not 1 <= index <= len(locations):
-            console.print(
-                "[red]That location number is "
-                "out of range.[/red]"
-            )
+            console.print("[red]That location number is out of range.[/red]")
 
             continue
 
@@ -304,22 +282,13 @@ def display_configuration():
 
     config = load_config()
 
-    table = Table(
-        title="Weather CLI Configuration"
-    )
+    table = Table(title="Weather CLI Configuration")
 
-    table.add_column(
-        "Setting"
-    )
+    table.add_column("Setting")
 
-    table.add_column(
-        "Value"
-    )
+    table.add_column("Value")
 
-    default_city = (
-        config.get("default_city")
-        or "Not configured"
-    )
+    default_city = config.get("default_city") or "Not configured"
 
     units = (
         "metric"
@@ -357,50 +326,34 @@ def handle_config(args):
     """Handle Weather CLI configuration commands."""
 
     if args.config_command == "set-city":
-        city = " ".join(
-            args.default_city
-        )
+        city = " ".join(args.default_city)
 
         set_default_city(city)
 
-        console.print(
-            f"[green]Default city set to "
-            f"{city}.[/green]"
-        )
+        console.print(f"[green]Default city set to {city}.[/green]")
 
         return
 
     if args.config_command == "set-days":
         try:
-            set_forecast_days(
-                args.forecast_days
-            )
+            set_forecast_days(args.forecast_days)
         except ValueError as error:
-            console.print(
-                f"[red]{error}[/red]"
-            )
+            console.print(f"[red]{error}[/red]")
 
             return
 
         console.print(
-            "[green]Default forecast days "
-            f"set to {args.forecast_days}."
-            "[/green]"
+            f"[green]Default forecast days set to {args.forecast_days}.[/green]"
         )
 
         return
 
     if args.config_command == "set-units":
-        metric = (
-            args.units == "metric"
-        )
+        metric = args.units == "metric"
 
         set_metric(metric)
 
-        console.print(
-            "[green]Default units set to "
-            f"{args.units}.[/green]"
-        )
+        console.print(f"[green]Default units set to {args.units}.[/green]")
 
         return
 
@@ -411,10 +364,7 @@ def handle_config(args):
     if args.config_command == "clear-cache":
         clear_cache()
 
-        console.print(
-            "[green]Weather cache cleared."
-            "[/green]"
-        )
+        console.print("[green]Weather cache cleared.[/green]")
 
         return
 
@@ -448,10 +398,7 @@ def run_weather(args):
             return
 
         if not 1 <= days <= 7:
-            console.print(
-                "[red]Forecast days must be "
-                "between 1 and 7.[/red]"
-            )
+            console.print("[red]Forecast days must be between 1 and 7.[/red]")
 
             return
 
@@ -460,37 +407,23 @@ def run_weather(args):
             city,
         )
 
-        locations = search_locations(
-            city
-        )
+        locations = search_locations(city)
 
         if not locations:
-            console.print(
-                f"[red]Could not find "
-                f"'{city}'.[/red]"
-            )
+            console.print(f"[red]Could not find '{city}'.[/red]")
 
             return
 
-        location = choose_location(
-            locations
-        )
+        location = choose_location(locations)
 
         if location is None:
-            console.print(
-                "[yellow]Search cancelled."
-                "[/yellow]"
-            )
+            console.print("[yellow]Search cancelled.[/yellow]")
 
             return
 
-        latitude = location[
-            "latitude"
-        ]
+        latitude = location["latitude"]
 
-        longitude = location[
-            "longitude"
-        ]
+        longitude = location["longitude"]
 
         logger.info(
             "Retrieving weather for %s",
@@ -520,19 +453,12 @@ def run_weather(args):
             )
 
     except requests.exceptions.Timeout:
-        logger.exception(
-            "Weather request timed out"
-        )
+        logger.exception("Weather request timed out")
 
-        console.print(
-            "[red]The weather request timed out. "
-            "Please try again.[/red]"
-        )
+        console.print("[red]The weather request timed out. Please try again.[/red]")
 
     except requests.exceptions.ConnectionError:
-        logger.exception(
-            "Unable to connect to weather service"
-        )
+        logger.exception("Unable to connect to weather service")
 
         console.print(
             "[red]Unable to connect to the weather "
@@ -541,52 +467,35 @@ def run_weather(args):
         )
 
     except requests.exceptions.HTTPError as error:
-        logger.exception(
-            "Weather service returned an HTTP error"
-        )
+        logger.exception("Weather service returned an HTTP error")
 
         console.print(
-            "[red]HTTP error while contacting the "
-            f"weather service: {error}[/red]"
+            f"[red]HTTP error while contacting the weather service: {error}[/red]"
         )
 
     except requests.exceptions.RequestException as error:
-        logger.exception(
-            "Weather request failed"
-        )
+        logger.exception("Weather request failed")
 
         console.print(
-            "[red]Request error while contacting the "
-            f"weather service: {error}[/red]"
+            f"[red]Request error while contacting the weather service: {error}[/red]"
         )
 
     except KeyError as error:
-        logger.exception(
-            "Unexpected weather data"
-        )
+        logger.exception("Unexpected weather data")
 
         console.print(
-            "[red]The weather service returned "
-            f"unexpected data: {error}[/red]"
+            f"[red]The weather service returned unexpected data: {error}[/red]"
         )
 
     except ValueError as error:
-        logger.exception(
-            "Invalid weather data"
-        )
+        logger.exception("Invalid weather data")
 
-        console.print(
-            f"[red]Data error: {error}[/red]"
-        )
+        console.print(f"[red]Data error: {error}[/red]")
 
     except Exception as error:
-        logger.exception(
-            "Unexpected Weather CLI error"
-        )
+        logger.exception("Unexpected Weather CLI error")
 
-        console.print(
-            f"[red]Unexpected error: {error}[/red]"
-        )
+        console.print(f"[red]Unexpected error: {error}[/red]")
 
 
 def main():

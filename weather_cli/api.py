@@ -1,3 +1,5 @@
+import logging
+
 import requests
 
 from weather_cli.cache import load_cache, save_cache
@@ -5,6 +7,8 @@ from weather_cli.cache import load_cache, save_cache
 
 GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search"
 FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
+
+logger = logging.getLogger(__name__)
 
 
 def search_locations(city, count=5):
@@ -21,6 +25,12 @@ def search_locations(city, count=5):
         "language": "en",
         "format": "json",
     }
+
+    logger.info(
+        "Searching locations: city=%s count=%s",
+        city,
+        count,
+    )
 
     response = requests.get(
         GEOCODING_URL,
@@ -50,6 +60,12 @@ def search_locations(city, count=5):
             }
         )
 
+    logger.info(
+        "Location search completed: city=%s matches=%s",
+        city,
+        len(locations),
+    )
+
     return locations
 
 
@@ -62,9 +78,9 @@ def build_weather_cache_key(
     """
     Build a unique cache key for a weather request.
 
-    The key includes coordinates, forecast length,
-    and unit system so different requests do not
-    overwrite one another.
+    Coordinates, forecast length, and unit system are
+    included so different requests do not share the
+    wrong cached response.
     """
 
     unit_system = (
@@ -91,8 +107,9 @@ def get_weather(
     """
     Retrieve weather data from Open-Meteo.
 
-    A recent cached response is returned when available.
-    Otherwise, the API is called and the result is cached.
+    A valid cached response is returned when available.
+    Otherwise, the Open-Meteo API is called and the
+    successful response is written to the cache.
     """
 
     cache_key = build_weather_cache_key(
@@ -107,7 +124,17 @@ def get_weather(
     )
 
     if cached_weather is not None:
+        logger.info(
+            "Weather cache hit: %s",
+            cache_key,
+        )
+
         return cached_weather
+
+    logger.info(
+        "Weather cache miss: %s",
+        cache_key,
+    )
 
     if metric:
         temperature_unit = "celsius"
@@ -148,6 +175,17 @@ def get_weather(
         "timezone": "auto",
     }
 
+    logger.info(
+        (
+            "Requesting weather API: "
+            "lat=%s lon=%s days=%s metric=%s"
+        ),
+        latitude,
+        longitude,
+        days,
+        metric,
+    )
+
     response = requests.get(
         FORECAST_URL,
         params=params,
@@ -158,9 +196,25 @@ def get_weather(
 
     weather = response.json()
 
+    logger.info(
+        (
+            "Weather API request successful: "
+            "lat=%s lon=%s days=%s metric=%s"
+        ),
+        latitude,
+        longitude,
+        days,
+        metric,
+    )
+
     save_cache(
         cache_key,
         weather,
+    )
+
+    logger.info(
+        "Weather response cached: %s",
+        cache_key,
     )
 
     return weather

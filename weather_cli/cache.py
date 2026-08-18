@@ -2,6 +2,7 @@ import json
 import time
 from pathlib import Path
 
+
 CACHE_DIRECTORY = Path.home() / ".weather-cli" / "cache"
 DEFAULT_TTL_SECONDS = 600
 
@@ -40,8 +41,14 @@ def load_cache(
     """
     Load cached data if it exists and has not expired.
 
-    Return None when the cache is missing, malformed,
-    unreadable, incomplete, invalid, or expired.
+    Returns None when:
+    - the cache file does not exist;
+    - the cache file cannot be read;
+    - the JSON is malformed;
+    - the payload is not a dictionary;
+    - required fields are missing;
+    - the timestamp is invalid;
+    - the cache entry has expired.
     """
 
     path = _cache_file(key)
@@ -77,10 +84,7 @@ def load_cache(
 
     if not isinstance(
         timestamp,
-        (
-            int,
-            float,
-        ),
+        int | float,
     ):
         return None
 
@@ -132,8 +136,8 @@ def clear_cache():
     """
     Remove all JSON files from the Weather CLI cache.
 
-    Missing directories and individual deletion failures
-    are ignored so cache cleanup cannot break the CLI.
+    Missing cache directories and individual deletion failures
+    are ignored so cache cleanup cannot break normal CLI operation.
     """
 
     if not CACHE_DIRECTORY.exists():

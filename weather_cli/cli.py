@@ -17,7 +17,7 @@ from weather_cli.config import (
 )
 from weather_cli.logging_config import configure_logging
 from weather_cli.normalization import normalize_current_weather
-from weather_cli.renderers import rich_renderer
+from weather_cli.renderers import json_renderer, rich_renderer
 
 console = Console()
 logger = logging.getLogger(__name__)
@@ -68,6 +68,12 @@ def build_weather_parser():
         "--imperial",
         action="store_true",
         help="Use imperial units",
+    )
+
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output machine-readable JSON",
     )
 
     return parser
@@ -385,6 +391,12 @@ def run_weather(args):
             days,
         ) = resolve_preferences(args)
 
+        json_output = getattr(args, "json", False)
+
+        if json_output and args.forecast:
+            console.print("[red]JSON forecast output is not implemented yet.[/red]")
+            return
+
         if not city:
             console.print(
                 "[red]No city specified.[/red]\n"
@@ -415,12 +427,15 @@ def run_weather(args):
 
             return
 
-        location = choose_location(locations)
+        if json_output:
+            location = locations[0]
+        else:
+            location = choose_location(locations)
 
-        if location is None:
-            console.print("[yellow]Search cancelled.[/yellow]")
+            if location is None:
+                console.print("[yellow]Search cancelled.[/yellow]")
 
-            return
+                return
 
         latitude = location["latitude"]
 
@@ -447,7 +462,10 @@ def run_weather(args):
             metric=metric,
         )
 
-        rich_renderer.render_current(report)
+        if json_output:
+            json_renderer.render_current(report)
+        else:
+            rich_renderer.render_current(report)
 
         if args.forecast:
             rich_renderer.render_forecast(

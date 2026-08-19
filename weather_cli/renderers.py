@@ -1,13 +1,13 @@
 """Output renderer boundary for normalized weather reports.
 
 Renderers consume normalized domain models rather than provider-specific
-API responses. The Rich renderer currently adapts normalized current-weather
-data to the established v0.1 display functions so terminal behavior remains
-unchanged while the presentation architecture evolves.
+API responses. Rich output targets human terminal use, while JSON output
+provides a stable machine-readable interface for automation.
 """
 
 from __future__ import annotations
 
+import json
 from typing import Protocol
 
 from weather_cli.display import display_current_weather, display_forecast
@@ -69,4 +69,54 @@ class RichWeatherRenderer:
         display_forecast(weather, metric)
 
 
+class JsonWeatherRenderer:
+    """Render normalized weather information as machine-readable JSON."""
+
+    def render_current(self, report: WeatherReport) -> None:
+        """Write normalized current-weather data as JSON."""
+
+        current = report.current
+
+        if current is None:
+            raise ValueError("WeatherReport does not contain current weather")
+
+        payload = {
+            "schema_version": "1",
+            "location": {
+                "name": report.location.name,
+                "state": report.location.state,
+                "country": report.location.country,
+                "latitude": report.location.latitude,
+                "longitude": report.location.longitude,
+                "timezone": report.location.timezone,
+            },
+            "units": report.units,
+            "current": {
+                "temperature": current.temperature,
+                "feels_like": current.apparent_temperature,
+                "humidity": current.humidity,
+                "weather": current.weather,
+                "weather_code": current.weather_code,
+                "wind_speed": current.wind_speed,
+                "wind_direction": current.wind_direction,
+                "wind_gusts": current.wind_gusts,
+                "precipitation": current.precipitation,
+            },
+        }
+
+        print(
+            json.dumps(
+                payload,
+                ensure_ascii=False,
+                sort_keys=True,
+            )
+        )
+
+    def render_forecast(self, weather: dict, metric: bool) -> None:
+        """JSON forecast output is introduced in GP-06."""
+
+        raise NotImplementedError("JSON forecast output is not implemented yet")
+
+
 rich_renderer = RichWeatherRenderer()
+json_renderer = JsonWeatherRenderer()

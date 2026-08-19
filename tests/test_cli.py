@@ -18,6 +18,7 @@ def test_weather_parser_city():
     assert args.days is None
     assert args.metric is False
     assert args.imperial is False
+    assert args.json is False
 
 
 def test_weather_parser_multiword_city():
@@ -79,6 +80,20 @@ def test_weather_parser_imperial():
 
     assert args.metric is False
     assert args.imperial is True
+
+
+def test_weather_parser_json():
+    parser = cli.build_weather_parser()
+
+    args = parser.parse_args(
+        [
+            "Atlanta",
+            "--json",
+        ]
+    )
+
+    assert args.city == ["Atlanta"]
+    assert args.json is True
 
 
 def test_weather_parser_version(capsys):
@@ -753,6 +768,7 @@ def test_run_weather_success_current_only(
 
     args = Namespace(
         forecast=False,
+        json=False,
     )
 
     cli.run_weather(args)
@@ -825,6 +841,7 @@ def test_run_weather_success_with_forecast(
 
     args = Namespace(
         forecast=True,
+        json=False,
     )
 
     cli.run_weather(args)
@@ -852,6 +869,99 @@ def test_run_weather_success_with_forecast(
         weather,
         True,
     )
+
+
+@patch("weather_cli.cli.json_renderer")
+@patch("weather_cli.cli.rich_renderer")
+@patch("weather_cli.cli.normalize_current_weather")
+@patch("weather_cli.cli.get_weather")
+@patch("weather_cli.cli.choose_location")
+@patch("weather_cli.cli.search_locations")
+@patch("weather_cli.cli.resolve_preferences")
+def test_run_weather_success_json(
+    mock_resolve_preferences,
+    mock_search_locations,
+    mock_choose_location,
+    mock_get_weather,
+    mock_normalize_current_weather,
+    mock_rich_renderer,
+    mock_json_renderer,
+):
+    location = {
+        "name": "Atlanta",
+        "latitude": 33.749,
+        "longitude": -84.388,
+        "state": "Georgia",
+        "country": "United States",
+        "timezone": "America/New_York",
+    }
+
+    weather = {
+        "current": {},
+    }
+
+    report = object()
+
+    mock_resolve_preferences.return_value = (
+        "Atlanta",
+        False,
+        3,
+    )
+
+    mock_search_locations.return_value = [location]
+    mock_choose_location.return_value = location
+    mock_get_weather.return_value = weather
+    mock_normalize_current_weather.return_value = report
+
+    args = Namespace(
+        forecast=False,
+        json=True,
+    )
+
+    cli.run_weather(args)
+
+    mock_search_locations.assert_called_once_with("Atlanta")
+    mock_choose_location.assert_not_called()
+
+    mock_get_weather.assert_called_once_with(
+        33.749,
+        -84.388,
+        3,
+        False,
+    )
+
+    mock_normalize_current_weather.assert_called_once_with(
+        location=location,
+        weather=weather,
+        metric=False,
+    )
+
+    mock_json_renderer.render_current.assert_called_once_with(report)
+    mock_rich_renderer.render_current.assert_not_called()
+    mock_rich_renderer.render_forecast.assert_not_called()
+
+
+@patch("weather_cli.cli.resolve_preferences")
+def test_run_weather_rejects_json_forecast(
+    mock_resolve_preferences,
+    capsys,
+):
+    mock_resolve_preferences.return_value = (
+        "Atlanta",
+        False,
+        3,
+    )
+
+    args = Namespace(
+        forecast=True,
+        json=True,
+    )
+
+    cli.run_weather(args)
+
+    output = capsys.readouterr().out
+
+    assert "JSON forecast output is not implemented yet" in output
 
 
 @patch(

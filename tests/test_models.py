@@ -48,8 +48,10 @@ def test_current_weather_stores_normalized_values() -> None:
         apparent_temperature=78.9,
         humidity=91,
         weather="Overcast",
+        weather_code=3,
         wind_speed=8.2,
         wind_direction=210.0,
+        wind_gusts=12.4,
         precipitation=0.0,
     )
 
@@ -57,8 +59,10 @@ def test_current_weather_stores_normalized_values() -> None:
     assert current.apparent_temperature == 78.9
     assert current.humidity == 91
     assert current.weather == "Overcast"
+    assert current.weather_code == 3
     assert current.wind_speed == 8.2
     assert current.wind_direction == 210.0
+    assert current.wind_gusts == 12.4
     assert current.precipitation == 0.0
 
 
@@ -68,10 +72,12 @@ def test_current_weather_optional_values_default_to_none() -> None:
         apparent_temperature=78.9,
         humidity=91,
         weather="Overcast",
+        weather_code=3,
     )
 
     assert current.wind_speed is None
     assert current.wind_direction is None
+    assert current.wind_gusts is None
     assert current.precipitation is None
 
 
@@ -154,11 +160,13 @@ def test_weather_report_supports_current_weather() -> None:
         longitude=-84.388,
         timezone="America/New_York",
     )
+
     current = CurrentWeather(
         temperature=72.8,
         apparent_temperature=78.9,
         humidity=91,
         weather="Overcast",
+        weather_code=3,
     )
 
     report = WeatherReport(
@@ -183,6 +191,7 @@ def test_weather_report_supports_daily_forecast() -> None:
         longitude=-84.388,
         timezone="America/New_York",
     )
+
     forecast = DailyForecast(
         date="2026-08-19",
         weather="Clear",
@@ -208,6 +217,7 @@ def test_weather_report_supports_hourly_forecast() -> None:
         longitude=-84.388,
         timezone="America/New_York",
     )
+
     hourly = HourlyForecast(
         time="2026-08-19T12:00",
         temperature=80.0,

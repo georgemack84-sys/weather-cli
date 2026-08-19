@@ -30,8 +30,10 @@ class CurrentWeather:
     apparent_temperature: float
     humidity: int
     weather: str
+    weather_code: int
     wind_speed: float | None = None
     wind_direction: float | None = None
+    wind_gusts: float | None = None
     precipitation: float | None = None
 
 

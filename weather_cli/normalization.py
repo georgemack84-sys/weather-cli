@@ -7,6 +7,7 @@ weather domain models consumed by application and presentation layers.
 from weather_cli.models import (
     CurrentWeather,
     DailyForecast,
+    HourlyForecast,
     Location,
     WeatherReport,
 )
@@ -61,16 +62,12 @@ def normalize_daily_forecast(
     """Convert Open-Meteo daily forecast data into normalized models."""
 
     daily = weather["daily"]
-
     forecasts = []
 
     for index, date in enumerate(daily["time"]):
         weather_code = int(daily["weather_code"][index])
-
         precipitation_probability = daily["precipitation_probability_max"][index]
-
         precipitation = daily["precipitation_sum"][index]
-
         wind_speed_max = daily["wind_speed_10m_max"][index]
 
         forecasts.append(
@@ -96,12 +93,45 @@ def normalize_daily_forecast(
     return tuple(forecasts)
 
 
+def normalize_hourly_forecast(
+    weather: dict,
+) -> tuple[HourlyForecast, ...]:
+    """Convert Open-Meteo hourly forecast data into normalized models."""
+
+    hourly = weather["hourly"]
+    forecasts = []
+
+    for index, time in enumerate(hourly["time"]):
+        weather_code = int(hourly["weather_code"][index])
+        precipitation_probability = hourly["precipitation_probability"][index]
+
+        forecasts.append(
+            HourlyForecast(
+                time=time,
+                temperature=float(hourly["temperature_2m"][index]),
+                apparent_temperature=float(hourly["apparent_temperature"][index]),
+                humidity=int(hourly["relative_humidity_2m"][index]),
+                weather=get_weather_description(weather_code),
+                precipitation_probability=(
+                    int(precipitation_probability)
+                    if precipitation_probability is not None
+                    else None
+                ),
+                precipitation=float(hourly["precipitation"][index]),
+                wind_speed=float(hourly["wind_speed_10m"][index]),
+            )
+        )
+
+    return tuple(forecasts)
+
+
 def normalize_weather_report(
     location: dict,
     weather: dict,
     metric: bool,
     *,
     include_forecast: bool = False,
+    include_hourly: bool = False,
 ) -> WeatherReport:
     """Convert provider data into a complete normalized WeatherReport."""
 
@@ -113,9 +143,12 @@ def normalize_weather_report(
 
     forecast = normalize_daily_forecast(weather) if include_forecast else ()
 
+    hourly = normalize_hourly_forecast(weather) if include_hourly else ()
+
     return WeatherReport(
         location=current_report.location,
         units=current_report.units,
         current=current_report.current,
         forecast=forecast,
+        hourly=hourly,
     )

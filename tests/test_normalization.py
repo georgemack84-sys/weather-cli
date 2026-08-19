@@ -1,12 +1,14 @@
 from weather_cli.models import (
     CurrentWeather,
     DailyForecast,
+    HourlyForecast,
     Location,
     WeatherReport,
 )
 from weather_cli.normalization import (
     normalize_current_weather,
     normalize_daily_forecast,
+    normalize_hourly_forecast,
     normalize_location,
     normalize_weather_report,
 )
@@ -70,6 +72,51 @@ def make_weather_with_forecast() -> dict:
             None,
         ],
     }
+    return weather
+
+
+def make_weather_with_hourly() -> dict:
+    weather = make_current_weather()
+    weather["hourly"] = {
+        "time": [
+            "2026-08-19T05:00",
+            "2026-08-19T06:00",
+        ],
+        "temperature_2m": [
+            72.2,
+            71.0,
+        ],
+        "apparent_temperature": [
+            74.0,
+            72.5,
+        ],
+        "relative_humidity_2m": [
+            80,
+            83,
+        ],
+        "weather_code": [
+            1,
+            61,
+        ],
+        "precipitation_probability": [
+            10,
+            None,
+        ],
+        "precipitation": [
+            0.0,
+            0.04,
+        ],
+        "wind_speed_10m": [
+            5.2,
+            6.4,
+        ],
+    }
+    return weather
+
+
+def make_weather_with_forecast_and_hourly() -> dict:
+    weather = make_weather_with_forecast()
+    weather["hourly"] = make_weather_with_hourly()["hourly"]
     return weather
 
 
@@ -196,14 +243,42 @@ def test_normalize_daily_forecast() -> None:
     )
 
 
-def test_normalize_weather_report_without_forecast() -> None:
-    weather = make_weather_with_forecast()
+def test_normalize_hourly_forecast() -> None:
+    result = normalize_hourly_forecast(make_weather_with_hourly())
+
+    assert result == (
+        HourlyForecast(
+            time="2026-08-19T05:00",
+            temperature=72.2,
+            apparent_temperature=74.0,
+            humidity=80,
+            weather="Mainly Clear",
+            precipitation_probability=10,
+            precipitation=0.0,
+            wind_speed=5.2,
+        ),
+        HourlyForecast(
+            time="2026-08-19T06:00",
+            temperature=71.0,
+            apparent_temperature=72.5,
+            humidity=83,
+            weather="Light Rain",
+            precipitation_probability=None,
+            precipitation=0.04,
+            wind_speed=6.4,
+        ),
+    )
+
+
+def test_normalize_weather_report_without_forecast_or_hourly() -> None:
+    weather = make_weather_with_forecast_and_hourly()
 
     result = normalize_weather_report(
         location=make_location(),
         weather=weather,
         metric=False,
         include_forecast=False,
+        include_hourly=False,
     )
 
     assert result.location == Location(
@@ -218,6 +293,7 @@ def test_normalize_weather_report_without_forecast() -> None:
     assert result.current is not None
     assert result.current.weather == "Overcast"
     assert result.forecast == ()
+    assert result.hourly == ()
 
 
 def test_normalize_weather_report_with_forecast() -> None:
@@ -240,3 +316,50 @@ def test_normalize_weather_report_with_forecast() -> None:
     assert result.forecast[1].precipitation_probability is None
     assert result.forecast[1].precipitation is None
     assert result.forecast[1].wind_speed_max is None
+    assert result.hourly == ()
+
+
+def test_normalize_weather_report_with_hourly() -> None:
+    weather = make_weather_with_hourly()
+
+    result = normalize_weather_report(
+        location=make_location(),
+        weather=weather,
+        metric=False,
+        include_hourly=True,
+    )
+
+    assert result.units == "imperial"
+    assert result.current is not None
+    assert result.forecast == ()
+    assert len(result.hourly) == 2
+    assert result.hourly[0].time == "2026-08-19T05:00"
+    assert result.hourly[0].weather == "Mainly Clear"
+    assert result.hourly[1].time == "2026-08-19T06:00"
+    assert result.hourly[1].weather == "Light Rain"
+    assert result.hourly[1].precipitation_probability is None
+
+
+def test_normalize_weather_report_with_forecast_and_hourly() -> None:
+    weather = make_weather_with_forecast_and_hourly()
+
+    result = normalize_weather_report(
+        location=make_location(),
+        weather=weather,
+        metric=True,
+        include_forecast=True,
+        include_hourly=True,
+    )
+
+    assert result.units == "metric"
+    assert result.current is not None
+    assert len(result.forecast) == 2
+    assert len(result.hourly) == 2
+
+    assert result.forecast[0].date == "2026-08-19"
+    assert result.forecast[1].weather == "Light Rain"
+
+    assert result.hourly[0].time == "2026-08-19T05:00"
+    assert result.hourly[0].weather == "Mainly Clear"
+    assert result.hourly[1].time == "2026-08-19T06:00"
+    assert result.hourly[1].weather == "Light Rain"

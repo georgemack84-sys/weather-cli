@@ -1,7 +1,10 @@
 from unittest.mock import Mock, patch
 
+import pytest
+
 from weather_cli.api import (
     build_weather_cache_key,
+    get_hourly_weather,
     get_weather,
     search_locations,
 )
@@ -146,7 +149,6 @@ def test_get_weather_imperial(
     mock_load_cache,
     mock_save_cache,
 ):
-    # Force a cache miss so the HTTP request is exercised.
     mock_load_cache.return_value = None
 
     mock_response = Mock()
@@ -201,7 +203,6 @@ def test_get_weather_metric(
     mock_load_cache,
     mock_save_cache,
 ):
-    # Force a cache miss.
     mock_load_cache.return_value = None
 
     mock_response = Mock()
@@ -271,10 +272,7 @@ def test_get_weather_cache_hit(
 
     assert result == cached_weather
 
-    # A cache hit should completely avoid the network.
     mock_get.assert_not_called()
-
-    # We also should not rewrite an already valid cache entry.
     mock_save_cache.assert_not_called()
 
 
@@ -315,3 +313,181 @@ def test_cache_miss_calls_api_and_saves_result(
         "weather_40.0_-75.0_4_imperial",
         api_data,
     )
+
+
+def make_hourly_api_response(hours: int = 3) -> dict:
+    return {
+        "hourly": {
+            "time": [f"2026-08-19T{hour:02d}:00" for hour in range(hours)],
+            "temperature_2m": [75.0 + hour for hour in range(hours)],
+            "apparent_temperature": [76.0 + hour for hour in range(hours)],
+            "relative_humidity_2m": [70 - hour for hour in range(hours)],
+            "weather_code": [1 for _ in range(hours)],
+            "precipitation_probability": [10 for _ in range(hours)],
+            "precipitation": [0.0 for _ in range(hours)],
+            "wind_speed_10m": [5.0 for _ in range(hours)],
+            "wind_direction_10m": [180 for _ in range(hours)],
+            "wind_gusts_10m": [8.0 for _ in range(hours)],
+        }
+    }
+
+
+@patch("weather_cli.api.requests.get")
+def test_get_hourly_weather_imperial(mock_get):
+    api_data = make_hourly_api_response(hours=24)
+
+    mock_response = Mock()
+    mock_response.json.return_value = api_data
+    mock_get.return_value = mock_response
+
+    result = get_hourly_weather(
+        33.749,
+        -84.388,
+        24,
+        False,
+    )
+
+    assert result == api_data
+
+    mock_get.assert_called_once()
+
+    _, kwargs = mock_get.call_args
+
+    params = kwargs["params"]
+
+    assert params["latitude"] == 33.749
+    assert params["longitude"] == -84.388
+    assert params["temperature_unit"] == "fahrenheit"
+    assert params["wind_speed_unit"] == "mph"
+    assert params["precipitation_unit"] == "inch"
+    assert params["forecast_hours"] == 24
+    assert params["timezone"] == "auto"
+    assert kwargs["timeout"] == 10
+
+    mock_response.raise_for_status.assert_called_once()
+
+
+@patch("weather_cli.api.requests.get")
+def test_get_hourly_weather_metric(mock_get):
+    api_data = make_hourly_api_response(hours=12)
+
+    mock_response = Mock()
+    mock_response.json.return_value = api_data
+    mock_get.return_value = mock_response
+
+    result = get_hourly_weather(
+        51.5072,
+        -0.1276,
+        12,
+        True,
+    )
+
+    assert result == api_data
+
+    _, kwargs = mock_get.call_args
+    params = kwargs["params"]
+
+    assert params["temperature_unit"] == "celsius"
+    assert params["wind_speed_unit"] == "kmh"
+    assert params["precipitation_unit"] == "mm"
+    assert params["forecast_hours"] == 12
+    assert params["timezone"] == "auto"
+
+    mock_response.raise_for_status.assert_called_once()
+
+
+@patch("weather_cli.api.requests.get")
+def test_get_hourly_weather_requests_expected_variables(mock_get):
+    mock_response = Mock()
+    mock_response.json.return_value = make_hourly_api_response(hours=6)
+    mock_get.return_value = mock_response
+
+    get_hourly_weather(
+        33.749,
+        -84.388,
+        6,
+        False,
+    )
+
+    _, kwargs = mock_get.call_args
+
+    assert kwargs["params"]["hourly"] == [
+        "temperature_2m",
+        "apparent_temperature",
+        "relative_humidity_2m",
+        "weather_code",
+        "precipitation_probability",
+        "precipitation",
+        "wind_speed_10m",
+        "wind_direction_10m",
+        "wind_gusts_10m",
+    ]
+
+
+@patch("weather_cli.api.requests.get")
+def test_get_hourly_weather_preserves_raw_response(mock_get):
+    api_data = {
+        "latitude": 33.749,
+        "longitude": -84.388,
+        "timezone": "America/New_York",
+        "hourly": {
+            "time": ["2026-08-19T05:00"],
+            "temperature_2m": [74.5],
+        },
+    }
+
+    mock_response = Mock()
+    mock_response.json.return_value = api_data
+    mock_get.return_value = mock_response
+
+    result = get_hourly_weather(
+        33.749,
+        -84.388,
+        1,
+        False,
+    )
+
+    assert result is api_data
+
+
+@pytest.mark.parametrize("hours", [1, 48])
+@patch("weather_cli.api.requests.get")
+def test_get_hourly_weather_accepts_boundary_hours(
+    mock_get,
+    hours,
+):
+    mock_response = Mock()
+    mock_response.json.return_value = make_hourly_api_response(hours=1)
+    mock_get.return_value = mock_response
+
+    get_hourly_weather(
+        33.749,
+        -84.388,
+        hours,
+        False,
+    )
+
+    _, kwargs = mock_get.call_args
+
+    assert kwargs["params"]["forecast_hours"] == hours
+    mock_response.raise_for_status.assert_called_once()
+
+
+@pytest.mark.parametrize("hours", [0, 49])
+@patch("weather_cli.api.requests.get")
+def test_get_hourly_weather_rejects_invalid_hours(
+    mock_get,
+    hours,
+):
+    with pytest.raises(
+        ValueError,
+        match="Hourly forecast hours must be between 1 and 48",
+    ):
+        get_hourly_weather(
+            33.749,
+            -84.388,
+            hours,
+            False,
+        )
+
+    mock_get.assert_not_called()

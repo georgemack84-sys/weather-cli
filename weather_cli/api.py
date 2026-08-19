@@ -94,7 +94,7 @@ def get_weather(
     metric,
 ):
     """
-    Retrieve weather data from Open-Meteo.
+    Retrieve current and daily weather data from Open-Meteo.
 
     A valid cached response is returned when available.
     Otherwise, the Open-Meteo API is called and the
@@ -163,7 +163,7 @@ def get_weather(
     }
 
     logger.info(
-        ("Requesting weather API: lat=%s lon=%s days=%s metric=%s"),
+        "Requesting weather API: lat=%s lon=%s days=%s metric=%s",
         latitude,
         longitude,
         days,
@@ -181,7 +181,7 @@ def get_weather(
     weather = response.json()
 
     logger.info(
-        ("Weather API request successful: lat=%s lon=%s days=%s metric=%s"),
+        "Weather API request successful: lat=%s lon=%s days=%s metric=%s",
         latitude,
         longitude,
         days,
@@ -196,6 +196,85 @@ def get_weather(
     logger.info(
         "Weather response cached: %s",
         cache_key,
+    )
+
+    return weather
+
+
+def get_hourly_weather(
+    latitude,
+    longitude,
+    hours,
+    metric,
+):
+    """
+    Retrieve hourly forecast data from Open-Meteo.
+
+    Hourly forecasts are intentionally uncached during GP-08.
+    Hourly cache-key architecture is introduced in a later
+    game plan.
+
+    The supported hourly forecast horizon is 1 through 48
+    hours inclusive.
+    """
+
+    if not 1 <= hours <= 48:
+        raise ValueError("Hourly forecast hours must be between 1 and 48")
+
+    if metric:
+        temperature_unit = "celsius"
+        wind_speed_unit = "kmh"
+        precipitation_unit = "mm"
+    else:
+        temperature_unit = "fahrenheit"
+        wind_speed_unit = "mph"
+        precipitation_unit = "inch"
+
+    params = {
+        "latitude": latitude,
+        "longitude": longitude,
+        "hourly": [
+            "temperature_2m",
+            "apparent_temperature",
+            "relative_humidity_2m",
+            "weather_code",
+            "precipitation_probability",
+            "precipitation",
+            "wind_speed_10m",
+            "wind_direction_10m",
+            "wind_gusts_10m",
+        ],
+        "temperature_unit": temperature_unit,
+        "wind_speed_unit": wind_speed_unit,
+        "precipitation_unit": precipitation_unit,
+        "forecast_hours": hours,
+        "timezone": "auto",
+    }
+
+    logger.info(
+        "Requesting hourly weather API: lat=%s lon=%s hours=%s metric=%s",
+        latitude,
+        longitude,
+        hours,
+        metric,
+    )
+
+    response = requests.get(
+        FORECAST_URL,
+        params=params,
+        timeout=10,
+    )
+
+    response.raise_for_status()
+
+    weather = response.json()
+
+    logger.info(
+        "Hourly weather API request successful: lat=%s lon=%s hours=%s metric=%s",
+        latitude,
+        longitude,
+        hours,
+        metric,
     )
 
     return weather

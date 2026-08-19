@@ -20,9 +20,6 @@ class WeatherRenderer(Protocol):
     def render_current(self, report: WeatherReport) -> None:
         """Render normalized current-weather data."""
 
-    def render_forecast(self, weather: dict, metric: bool) -> None:
-        """Render forecast data during the transitional architecture."""
-
 
 class RichWeatherRenderer:
     """Render weather information using the existing Rich presentation layer."""
@@ -72,8 +69,8 @@ class RichWeatherRenderer:
 class JsonWeatherRenderer:
     """Render normalized weather information as machine-readable JSON."""
 
-    def render_current(self, report: WeatherReport) -> None:
-        """Write normalized current-weather data as JSON."""
+    def _build_payload(self, report: WeatherReport) -> dict:
+        """Build the stable JSON payload for a normalized WeatherReport."""
 
         current = report.current
 
@@ -104,6 +101,25 @@ class JsonWeatherRenderer:
             },
         }
 
+        if report.forecast:
+            payload["forecast"] = [
+                {
+                    "date": forecast.date,
+                    "weather": forecast.weather,
+                    "temperature_max": forecast.temperature_max,
+                    "temperature_min": forecast.temperature_min,
+                    "precipitation_probability": (forecast.precipitation_probability),
+                    "precipitation": forecast.precipitation,
+                    "wind_speed_max": forecast.wind_speed_max,
+                }
+                for forecast in report.forecast
+            ]
+
+        return payload
+
+    def _write_payload(self, payload: dict) -> None:
+        """Write one machine-readable JSON document to stdout."""
+
         print(
             json.dumps(
                 payload,
@@ -112,10 +128,15 @@ class JsonWeatherRenderer:
             )
         )
 
-    def render_forecast(self, weather: dict, metric: bool) -> None:
-        """JSON forecast output is introduced in GP-06."""
+    def render_current(self, report: WeatherReport) -> None:
+        """Write normalized current-weather data as JSON."""
 
-        raise NotImplementedError("JSON forecast output is not implemented yet")
+        self._write_payload(self._build_payload(report))
+
+    def render_forecast(self, report: WeatherReport) -> None:
+        """Write normalized current and forecast weather as JSON."""
+
+        self._write_payload(self._build_payload(report))
 
 
 rich_renderer = RichWeatherRenderer()

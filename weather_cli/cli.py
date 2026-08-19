@@ -16,7 +16,7 @@ from weather_cli.config import (
     set_metric,
 )
 from weather_cli.logging_config import configure_logging
-from weather_cli.normalization import normalize_current_weather
+from weather_cli.normalization import normalize_weather_report
 from weather_cli.renderers import json_renderer, rich_renderer
 
 console = Console()
@@ -393,10 +393,6 @@ def run_weather(args):
 
         json_output = getattr(args, "json", False)
 
-        if json_output and args.forecast:
-            console.print("[red]JSON forecast output is not implemented yet.[/red]")
-            return
-
         if not city:
             console.print(
                 "[red]No city specified.[/red]\n"
@@ -456,22 +452,27 @@ def run_weather(args):
             metric,
         )
 
-        report = normalize_current_weather(
+        report = normalize_weather_report(
             location=location,
             weather=weather,
             metric=metric,
+            include_forecast=args.forecast,
         )
 
         if json_output:
-            json_renderer.render_current(report)
+            if args.forecast:
+                json_renderer.render_forecast(report)
+            else:
+                json_renderer.render_current(report)
+
         else:
             rich_renderer.render_current(report)
 
-        if args.forecast:
-            rich_renderer.render_forecast(
-                weather,
-                metric,
-            )
+            if args.forecast:
+                rich_renderer.render_forecast(
+                    weather,
+                    metric,
+                )
 
     except requests.exceptions.Timeout:
         logger.exception("Weather request timed out")

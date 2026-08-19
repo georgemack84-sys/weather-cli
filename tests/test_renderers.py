@@ -2,7 +2,12 @@ import json
 
 import pytest
 
-from weather_cli.models import CurrentWeather, Location, WeatherReport
+from weather_cli.models import (
+    CurrentWeather,
+    DailyForecast,
+    Location,
+    WeatherReport,
+)
 from weather_cli.renderers import JsonWeatherRenderer, RichWeatherRenderer
 
 
@@ -27,6 +32,51 @@ def make_report(*, units: str = "imperial") -> WeatherReport:
             wind_direction=210.0,
             wind_gusts=12.4,
             precipitation=0.0,
+        ),
+    )
+
+
+def make_forecast_report(*, units: str = "imperial") -> WeatherReport:
+    return WeatherReport(
+        location=Location(
+            name="Atlanta",
+            state="Georgia",
+            country="United States",
+            latitude=33.749,
+            longitude=-84.388,
+            timezone="America/New_York",
+        ),
+        units=units,
+        current=CurrentWeather(
+            temperature=74.0,
+            apparent_temperature=79.5,
+            humidity=84,
+            weather="Mainly Clear",
+            weather_code=1,
+            wind_speed=4.7,
+            wind_direction=267.0,
+            wind_gusts=8.7,
+            precipitation=0.0,
+        ),
+        forecast=(
+            DailyForecast(
+                date="2026-08-19",
+                weather="Partly Cloudy",
+                temperature_max=84.0,
+                temperature_min=68.0,
+                precipitation_probability=20,
+                precipitation=0.01,
+                wind_speed_max=12.4,
+            ),
+            DailyForecast(
+                date="2026-08-20",
+                weather="Slight Rain",
+                temperature_max=80.0,
+                temperature_min=66.0,
+                precipitation_probability=70,
+                precipitation=0.25,
+                wind_speed_max=15.0,
+            ),
         ),
     )
 
@@ -137,7 +187,6 @@ def test_json_renderer_outputs_valid_current_weather_json(capsys) -> None:
     renderer.render_current(make_report())
 
     output = capsys.readouterr().out
-
     payload = json.loads(output)
 
     assert payload == {
@@ -216,11 +265,64 @@ def test_json_renderer_rejects_report_without_current_weather() -> None:
         renderer.render_current(report)
 
 
-def test_json_renderer_forecast_not_implemented() -> None:
+def test_json_renderer_outputs_forecast_json(capsys) -> None:
     renderer = JsonWeatherRenderer()
 
-    with pytest.raises(
-        NotImplementedError,
-        match="JSON forecast output is not implemented yet",
-    ):
-        renderer.render_forecast({}, metric=False)
+    renderer.render_forecast(make_forecast_report())
+
+    output = capsys.readouterr().out
+    payload = json.loads(output)
+
+    assert payload["schema_version"] == "1"
+    assert payload["location"] == {
+        "name": "Atlanta",
+        "state": "Georgia",
+        "country": "United States",
+        "latitude": 33.749,
+        "longitude": -84.388,
+        "timezone": "America/New_York",
+    }
+    assert payload["units"] == "imperial"
+
+    assert payload["current"] == {
+        "temperature": 74.0,
+        "feels_like": 79.5,
+        "humidity": 84,
+        "weather": "Mainly Clear",
+        "weather_code": 1,
+        "wind_speed": 4.7,
+        "wind_direction": 267.0,
+        "wind_gusts": 8.7,
+        "precipitation": 0.0,
+    }
+
+    assert payload["forecast"] == [
+        {
+            "date": "2026-08-19",
+            "weather": "Partly Cloudy",
+            "temperature_max": 84.0,
+            "temperature_min": 68.0,
+            "precipitation_probability": 20,
+            "precipitation": 0.01,
+            "wind_speed_max": 12.4,
+        },
+        {
+            "date": "2026-08-20",
+            "weather": "Slight Rain",
+            "temperature_max": 80.0,
+            "temperature_min": 66.0,
+            "precipitation_probability": 70,
+            "precipitation": 0.25,
+            "wind_speed_max": 15.0,
+        },
+    ]
+
+
+def test_json_renderer_forecast_without_items_omits_forecast(capsys) -> None:
+    renderer = JsonWeatherRenderer()
+
+    renderer.render_forecast(make_report())
+
+    payload = json.loads(capsys.readouterr().out)
+
+    assert "forecast" not in payload

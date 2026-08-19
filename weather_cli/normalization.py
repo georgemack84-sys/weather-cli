@@ -4,7 +4,12 @@ This module converts Open-Meteo/geocoding dictionaries into the stable
 weather domain models consumed by application and presentation layers.
 """
 
-from weather_cli.models import CurrentWeather, Location, WeatherReport
+from weather_cli.models import (
+    CurrentWeather,
+    DailyForecast,
+    Location,
+    WeatherReport,
+)
 from weather_cli.weather_codes import get_weather_description
 
 
@@ -47,4 +52,70 @@ def normalize_current_weather(
         location=normalize_location(location),
         units="metric" if metric else "imperial",
         current=normalized_current,
+    )
+
+
+def normalize_daily_forecast(
+    weather: dict,
+) -> tuple[DailyForecast, ...]:
+    """Convert Open-Meteo daily forecast data into normalized models."""
+
+    daily = weather["daily"]
+
+    forecasts = []
+
+    for index, date in enumerate(daily["time"]):
+        weather_code = int(daily["weather_code"][index])
+
+        precipitation_probability = daily["precipitation_probability_max"][index]
+
+        precipitation = daily["precipitation_sum"][index]
+
+        wind_speed_max = daily["wind_speed_10m_max"][index]
+
+        forecasts.append(
+            DailyForecast(
+                date=date,
+                weather=get_weather_description(weather_code),
+                temperature_max=float(daily["temperature_2m_max"][index]),
+                temperature_min=float(daily["temperature_2m_min"][index]),
+                precipitation_probability=(
+                    int(precipitation_probability)
+                    if precipitation_probability is not None
+                    else None
+                ),
+                precipitation=(
+                    float(precipitation) if precipitation is not None else None
+                ),
+                wind_speed_max=(
+                    float(wind_speed_max) if wind_speed_max is not None else None
+                ),
+            )
+        )
+
+    return tuple(forecasts)
+
+
+def normalize_weather_report(
+    location: dict,
+    weather: dict,
+    metric: bool,
+    *,
+    include_forecast: bool = False,
+) -> WeatherReport:
+    """Convert provider data into a complete normalized WeatherReport."""
+
+    current_report = normalize_current_weather(
+        location=location,
+        weather=weather,
+        metric=metric,
+    )
+
+    forecast = normalize_daily_forecast(weather) if include_forecast else ()
+
+    return WeatherReport(
+        location=current_report.location,
+        units=current_report.units,
+        current=current_report.current,
+        forecast=forecast,
     )

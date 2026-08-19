@@ -722,7 +722,7 @@ def test_run_weather_cancelled(
 
 
 @patch("weather_cli.cli.rich_renderer")
-@patch("weather_cli.cli.normalize_current_weather")
+@patch("weather_cli.cli.normalize_weather_report")
 @patch("weather_cli.cli.get_weather")
 @patch("weather_cli.cli.choose_location")
 @patch("weather_cli.cli.search_locations")
@@ -732,7 +732,7 @@ def test_run_weather_success_current_only(
     mock_search_locations,
     mock_choose_location,
     mock_get_weather,
-    mock_normalize_current_weather,
+    mock_normalize_weather_report,
     mock_rich_renderer,
 ):
     location = {
@@ -764,7 +764,7 @@ def test_run_weather_success_current_only(
 
     mock_get_weather.return_value = weather
 
-    mock_normalize_current_weather.return_value = report
+    mock_normalize_weather_report.return_value = report
 
     args = Namespace(
         forecast=False,
@@ -784,10 +784,11 @@ def test_run_weather_success_current_only(
         False,
     )
 
-    mock_normalize_current_weather.assert_called_once_with(
+    mock_normalize_weather_report.assert_called_once_with(
         location=location,
         weather=weather,
         metric=False,
+        include_forecast=False,
     )
 
     mock_rich_renderer.render_current.assert_called_once_with(report)
@@ -796,7 +797,7 @@ def test_run_weather_success_current_only(
 
 
 @patch("weather_cli.cli.rich_renderer")
-@patch("weather_cli.cli.normalize_current_weather")
+@patch("weather_cli.cli.normalize_weather_report")
 @patch("weather_cli.cli.get_weather")
 @patch("weather_cli.cli.choose_location")
 @patch("weather_cli.cli.search_locations")
@@ -806,7 +807,7 @@ def test_run_weather_success_with_forecast(
     mock_search_locations,
     mock_choose_location,
     mock_get_weather,
-    mock_normalize_current_weather,
+    mock_normalize_weather_report,
     mock_rich_renderer,
 ):
     location = {
@@ -837,7 +838,7 @@ def test_run_weather_success_with_forecast(
 
     mock_get_weather.return_value = weather
 
-    mock_normalize_current_weather.return_value = report
+    mock_normalize_weather_report.return_value = report
 
     args = Namespace(
         forecast=True,
@@ -857,10 +858,11 @@ def test_run_weather_success_with_forecast(
         True,
     )
 
-    mock_normalize_current_weather.assert_called_once_with(
+    mock_normalize_weather_report.assert_called_once_with(
         location=location,
         weather=weather,
         metric=True,
+        include_forecast=True,
     )
 
     mock_rich_renderer.render_current.assert_called_once_with(report)
@@ -873,7 +875,7 @@ def test_run_weather_success_with_forecast(
 
 @patch("weather_cli.cli.json_renderer")
 @patch("weather_cli.cli.rich_renderer")
-@patch("weather_cli.cli.normalize_current_weather")
+@patch("weather_cli.cli.normalize_weather_report")
 @patch("weather_cli.cli.get_weather")
 @patch("weather_cli.cli.choose_location")
 @patch("weather_cli.cli.search_locations")
@@ -883,7 +885,7 @@ def test_run_weather_success_json(
     mock_search_locations,
     mock_choose_location,
     mock_get_weather,
-    mock_normalize_current_weather,
+    mock_normalize_weather_report,
     mock_rich_renderer,
     mock_json_renderer,
 ):
@@ -911,7 +913,7 @@ def test_run_weather_success_json(
     mock_search_locations.return_value = [location]
     mock_choose_location.return_value = location
     mock_get_weather.return_value = weather
-    mock_normalize_current_weather.return_value = report
+    mock_normalize_weather_report.return_value = report
 
     args = Namespace(
         forecast=False,
@@ -930,10 +932,11 @@ def test_run_weather_success_json(
         False,
     )
 
-    mock_normalize_current_weather.assert_called_once_with(
+    mock_normalize_weather_report.assert_called_once_with(
         location=location,
         weather=weather,
         metric=False,
+        include_forecast=False,
     )
 
     mock_json_renderer.render_current.assert_called_once_with(report)
@@ -941,16 +944,47 @@ def test_run_weather_success_json(
     mock_rich_renderer.render_forecast.assert_not_called()
 
 
+@patch("weather_cli.cli.json_renderer")
+@patch("weather_cli.cli.rich_renderer")
+@patch("weather_cli.cli.normalize_weather_report")
+@patch("weather_cli.cli.get_weather")
+@patch("weather_cli.cli.choose_location")
+@patch("weather_cli.cli.search_locations")
 @patch("weather_cli.cli.resolve_preferences")
-def test_run_weather_rejects_json_forecast(
+def test_run_weather_success_json_forecast(
     mock_resolve_preferences,
-    capsys,
+    mock_search_locations,
+    mock_choose_location,
+    mock_get_weather,
+    mock_normalize_weather_report,
+    mock_rich_renderer,
+    mock_json_renderer,
 ):
+    location = {
+        "name": "Atlanta",
+        "latitude": 33.749,
+        "longitude": -84.388,
+        "state": "Georgia",
+        "country": "United States",
+        "timezone": "America/New_York",
+    }
+
+    weather = {
+        "current": {},
+        "daily": {},
+    }
+
+    report = object()
+
     mock_resolve_preferences.return_value = (
         "Atlanta",
         False,
-        3,
+        5,
     )
+
+    mock_search_locations.return_value = [location]
+    mock_get_weather.return_value = weather
+    mock_normalize_weather_report.return_value = report
 
     args = Namespace(
         forecast=True,
@@ -959,9 +993,28 @@ def test_run_weather_rejects_json_forecast(
 
     cli.run_weather(args)
 
-    output = capsys.readouterr().out
+    mock_search_locations.assert_called_once_with("Atlanta")
+    mock_choose_location.assert_not_called()
 
-    assert "JSON forecast output is not implemented yet" in output
+    mock_get_weather.assert_called_once_with(
+        33.749,
+        -84.388,
+        5,
+        False,
+    )
+
+    mock_normalize_weather_report.assert_called_once_with(
+        location=location,
+        weather=weather,
+        metric=False,
+        include_forecast=True,
+    )
+
+    mock_json_renderer.render_forecast.assert_called_once_with(report)
+    mock_json_renderer.render_current.assert_not_called()
+
+    mock_rich_renderer.render_current.assert_not_called()
+    mock_rich_renderer.render_forecast.assert_not_called()
 
 
 @patch(

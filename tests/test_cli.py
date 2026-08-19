@@ -706,7 +706,8 @@ def test_run_weather_cancelled(
     mock_choose_location.assert_called_once()
 
 
-@patch("weather_cli.cli.display_current_weather")
+@patch("weather_cli.cli.rich_renderer")
+@patch("weather_cli.cli.normalize_current_weather")
 @patch("weather_cli.cli.get_weather")
 @patch("weather_cli.cli.choose_location")
 @patch("weather_cli.cli.search_locations")
@@ -716,7 +717,8 @@ def test_run_weather_success_current_only(
     mock_search_locations,
     mock_choose_location,
     mock_get_weather,
-    mock_display_current_weather,
+    mock_normalize_current_weather,
+    mock_rich_renderer,
 ):
     location = {
         "name": "Atlanta",
@@ -733,6 +735,8 @@ def test_run_weather_success_current_only(
         }
     }
 
+    report = object()
+
     mock_resolve_preferences.return_value = (
         "Atlanta",
         False,
@@ -745,11 +749,17 @@ def test_run_weather_success_current_only(
 
     mock_get_weather.return_value = weather
 
+    mock_normalize_current_weather.return_value = report
+
     args = Namespace(
         forecast=False,
     )
 
     cli.run_weather(args)
+
+    mock_search_locations.assert_called_once_with("Atlanta")
+
+    mock_choose_location.assert_called_once_with([location])
 
     mock_get_weather.assert_called_once_with(
         33.749,
@@ -758,15 +768,19 @@ def test_run_weather_success_current_only(
         False,
     )
 
-    mock_display_current_weather.assert_called_once_with(
-        location,
-        weather,
-        False,
+    mock_normalize_current_weather.assert_called_once_with(
+        location=location,
+        weather=weather,
+        metric=False,
     )
 
+    mock_rich_renderer.render_current.assert_called_once_with(report)
 
-@patch("weather_cli.cli.display_forecast")
-@patch("weather_cli.cli.display_current_weather")
+    mock_rich_renderer.render_forecast.assert_not_called()
+
+
+@patch("weather_cli.cli.rich_renderer")
+@patch("weather_cli.cli.normalize_current_weather")
 @patch("weather_cli.cli.get_weather")
 @patch("weather_cli.cli.choose_location")
 @patch("weather_cli.cli.search_locations")
@@ -776,8 +790,8 @@ def test_run_weather_success_with_forecast(
     mock_search_locations,
     mock_choose_location,
     mock_get_weather,
-    mock_display_current_weather,
-    mock_display_forecast,
+    mock_normalize_current_weather,
+    mock_rich_renderer,
 ):
     location = {
         "name": "Atlanta",
@@ -793,6 +807,8 @@ def test_run_weather_success_with_forecast(
         "daily": {},
     }
 
+    report = object()
+
     mock_resolve_preferences.return_value = (
         "Atlanta",
         True,
@@ -805,19 +821,34 @@ def test_run_weather_success_with_forecast(
 
     mock_get_weather.return_value = weather
 
+    mock_normalize_current_weather.return_value = report
+
     args = Namespace(
         forecast=True,
     )
 
     cli.run_weather(args)
 
-    mock_display_current_weather.assert_called_once_with(
-        location,
-        weather,
+    mock_search_locations.assert_called_once_with("Atlanta")
+
+    mock_choose_location.assert_called_once_with([location])
+
+    mock_get_weather.assert_called_once_with(
+        33.749,
+        -84.388,
+        5,
         True,
     )
 
-    mock_display_forecast.assert_called_once_with(
+    mock_normalize_current_weather.assert_called_once_with(
+        location=location,
+        weather=weather,
+        metric=True,
+    )
+
+    mock_rich_renderer.render_current.assert_called_once_with(report)
+
+    mock_rich_renderer.render_forecast.assert_called_once_with(
         weather,
         True,
     )

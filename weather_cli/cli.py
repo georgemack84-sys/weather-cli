@@ -15,8 +15,9 @@ from weather_cli.config import (
     set_forecast_days,
     set_metric,
 )
-from weather_cli.display import display_current_weather, display_forecast
 from weather_cli.logging_config import configure_logging
+from weather_cli.normalization import normalize_current_weather
+from weather_cli.renderers import rich_renderer
 
 console = Console()
 logger = logging.getLogger(__name__)
@@ -440,14 +441,16 @@ def run_weather(args):
             metric,
         )
 
-        display_current_weather(
-            location,
-            weather,
-            metric,
+        report = normalize_current_weather(
+            location=location,
+            weather=weather,
+            metric=metric,
         )
 
+        rich_renderer.render_current(report)
+
         if args.forecast:
-            display_forecast(
+            rich_renderer.render_forecast(
                 weather,
                 metric,
             )
